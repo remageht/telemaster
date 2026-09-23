@@ -286,6 +286,19 @@
   /* ---------- Корзина ---------- */
   const cartCount = document.getElementById("cartCount");
   const cartBtn = document.getElementById("cartBtn");
+  const RL_WINDOW = 15 * 60 * 1000, RL_MAX = 5;
+  const hitRateLimit = (key) => {
+    try {
+      const k = "tm-rl:" + key;
+      const now = Date.now();
+      let arr = JSON.parse(localStorage.getItem(k) || "[]");
+      arr = arr.filter((t) => now - t < RL_WINDOW);
+      if (arr.length >= RL_MAX) return false;
+      arr.push(now);
+      localStorage.setItem(k, JSON.stringify(arr));
+      return true;
+    } catch { return true; }
+  };
   const CART_KEY = "tm-cart";
 
   const cartStore = {
@@ -484,6 +497,7 @@
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    if (!hitRateLimit("lead")) { showToast("Слишком много заявок — попробуйте через 15 минут"); return; }
 
     const name = form.elements.name;
     const phone = form.elements.phone;
@@ -890,10 +904,12 @@
 
   authForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const rawPhone = authForm.elements.phone.value.trim();
+    if (!hitRateLimit("auth:" + (normPhone(rawPhone) || "guest"))) { showToast("Слишком много попыток входа — попробуйте через 15 минут"); return; }
     const mode = authTabs.dataset.active;
     const isSignup = mode === "signup";
     const isCode = mode === "code";
-    const phone = authForm.elements.phone.value.trim();
+    const phone = rawPhone;
     const password = authForm.elements.password.value;
     const name = authForm.elements.name.value.trim();
     let ok = true;
@@ -2577,6 +2593,7 @@ const productCard = (p) => {
   document.addEventListener("submit", async (e) => {
     if (e.target.id === "checkoutForm") {
       e.preventDefault();
+      if (!hitRateLimit("checkout:" + (normPhone(e.target.elements.phone?.value || "") || "guest"))) { showToast("Слишком много заказов — попробуйте через 15 минут"); return; }
       placeOrder(e.target);
       return;
     }
