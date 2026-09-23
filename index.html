@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ТЕЛЕМАСТЕР — магазин электронных и радиокомпонентов</title>
+  <meta name="description" content="ТЕЛЕМАСТЕР — магазин радиокомпонентов для мастеров и радиолюбителей. 12 000+ наименований в наличии: микросхемы, датчики, наборы, провода. Отправка за 24 часа, доставка по Крыму и самовывоз.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="ТЕЛЕМАСТЕР — радиодетали и электроника">
+  <meta property="og:description" content="12 000+ радиокомпонентов в наличии. Отправка за 24 часа, доставка по Крыму и самовывоз.">
+  <meta property="og:image" content="img/icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="ТЕЛЕМАСТЕР — радиодетали и электроника">
+  <meta name="twitter:description" content="12 000+ радиокомпонентов в наличии. Доставка по Крыму и самовывоз.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23c8102e'/%3E%3Crect x='20' y='20' width='24' height='24' rx='4' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M26 20v-8M38 20v-8M26 44v8M38 44v8M20 26h-8M20 38h-8M44 26h8M44 38h8' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#c8102e">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=60">
+</head>
+<body>
+
+  <!-- Стартовый прелоадер-электросхема -->
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="boot__inner">
+      <svg class="boot__scheme" id="bootScheme" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <defs>
+          <radialGradient id="bootGlow">
+            <stop offset="0" stop-color="#ffb703" stop-opacity="0.85"/>
+            <stop offset="0.5" stop-color="#e05a2b" stop-opacity="0.35"/>
+            <stop offset="1" stop-color="#e05a2b" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <path class="boot__trace" d="M10 62H62"/>
+        <path class="boot__trace boot__trace--2" d="M138 62H190"/>
+        <path class="boot__trace" d="M138 100H190"/>
+        <path class="boot__trace boot__trace--2" d="M10 100H62"/>
+        <path class="boot__trace" d="M100 8V39"/>
+        <path class="boot__trace boot__trace--2" d="M100 121V154"/>
+        <circle class="boot__node" cx="10" cy="62" r="3"/>
+        <circle class="boot__node" cx="190" cy="62" r="3"/>
+        <circle class="boot__node" cx="190" cy="100" r="3"/>
+        <circle class="boot__node" cx="10" cy="100" r="3"/>
+        <circle class="boot__node" cx="100" cy="8" r="3"/>
+        <circle class="boot__node" cx="100" cy="154" r="3"/>
+        <!-- статичный мозг: схема впаивается в него по 6 точкам -->
+        <circle cx="100" cy="81" r="46" fill="url(#bootGlow)" stroke="none" opacity="0">
+          <animate attributeName="opacity" values="0;0.9" begin="2.6s" dur="0.35s" fill="freeze"/>
+        </circle>
+        <g stroke-width="1.6" opacity="0.95">
+          <path d="M100 41C80 41 64 55 64 79C64 103 80 119 100 120"/>
+          <path d="M100 41C120 41 136 55 136 79C136 103 120 119 100 120"/>
+          <path d="M100 41V120" stroke-width="1.1" opacity="0.6"/>
+          <path d="M76 62c-7 3-10 9-8 17M72 92c1 8 7 14 15 15M86 52c5-4 12-4 16 1"/>
+          <path d="M124 62c7 3 10 9 8 17M128 92c-1 8-7 14-15 15M114 52c-5-4-12-4-16 1"/>
+          <rect x="92" y="73" width="16" height="16" rx="3"/>
+          <path d="M92 77H84M92 85H84M108 77H116M108 85H116M96 73V66M104 73V66M96 89V96M104 89V96" stroke-width="1.2"/>
+        </g>
+        <!-- связи мозг → выводы чипа -->
+        <g stroke-width="1.1" opacity="0.7">
+          <path d="M64 74L80 77M64 88L80 85M136 74L120 77M136 88L120 85"/>
+          <path d="M96 118V100M104 118V100"/>
+        </g>
+        <g fill="currentColor" stroke="none">
+            <circle cx="84" cy="77" r="0"><animate attributeName="r" values="0;3.2" begin="0.35s" dur="0.15s" fill="freeze"/></circle>
+            <circle cx="84" cy="85" r="0"><animate attributeName="r" values="0;3.2" begin="0.75s" dur="0.15s" fill="freeze"/></circle>
+            <circle cx="96" cy="96" r="0"><animate attributeName="r" values="0;3.2" begin="1.15s" dur="0.15s" fill="freeze"/></circle>
+            <circle cx="104" cy="96" r="0"><animate attributeName="r" values="0;3.2" begin="1.55s" dur="0.15s" fill="freeze"/></circle>
+            <circle cx="116" cy="85" r="0"><animate attributeName="r" values="0;3.2" begin="1.95s" dur="0.15s" fill="freeze"/></circle>
+            <circle cx="116" cy="77" r="0"><animate attributeName="r" values="0;3.2" begin="2.35s" dur="0.15s" fill="freeze"/></circle>
+          </g>
+          <circle class="boot__core" cx="100" cy="81" r="10" opacity="0">
+            <animate attributeName="opacity" values="0;1" begin="2.6s" dur="0.3s" fill="freeze"/>
+            <animate attributeName="opacity" values="1;1" dur="0.01s" begin="3.15s" fill="freeze" onend="window.__bootDone&&window.__bootDone()"/>
+          </circle>
+          <g class="boot__iron">
+            <path d="M0 0L-11 11" stroke-width="2.5"/>
+            <path d="M-11 11L-26 26" stroke-width="5"/>
+            <path d="M-29 23l6 6" stroke-width="7"/>
+            <path d="M-28 28L-48 48" stroke-width="9" stroke="#9a938a" stroke-linecap="round"/>
+            <path d="M-37 31l6 6M-43 37l6 6" stroke-width="1.6" stroke="#6e695f"/>
+            <path d="M-48 48c-4 6-10 8-16 10" stroke-width="2.5"/>
+            <g opacity="0">
+              <animate attributeName="opacity"
+                values="0;1;.35;1;.35;1;.35;1"
+                keyTimes="0; .117; .25; .383; .517; .65; .783; 1"
+                dur="3s" fill="freeze"/>
+              <circle r="13" fill="url(#bootGlow)" stroke="none"/>
+              <path class="boot__smoke" d="M3 -5c-3 -4 3 -7 0 -12"/>
+              <path class="boot__smoke boot__smoke--2" d="M-4 -4c-2 -3 2 -6 0 -10"/>
+              <g fill="#ffd166" stroke="none">
+                <circle r="1.4" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; 8 -7" begin="0.35s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="0.35s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.1" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; -7 -6" begin="0.35s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="0.35s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.4" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; -8 -5" begin="0.75s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="0.75s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.1" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; 6 -8" begin="0.75s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="0.75s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.4" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; 7 -6" begin="1.15s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="1.15s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.1" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; -6 6" begin="1.15s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="1.15s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.4" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; 7 -7" begin="1.55s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="1.55s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.1" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; -8 -4" begin="1.55s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="1.55s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.4" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; -7 -7" begin="1.95s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="1.95s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.1" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; 8 -5" begin="1.95s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="1.95s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.4" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; 6 -8" begin="2.35s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="2.35s" dur="0.3s" fill="freeze"/></circle>
+                <circle r="1.1" opacity="0"><animateTransform attributeName="transform" type="translate" values="0 0; -6 -7" begin="2.35s" dur="0.3s" fill="freeze"/><animate attributeName="opacity" values="0;1;0" keyTimes="0;.25;1" begin="2.35s" dur="0.3s" fill="freeze"/></circle>
+              </g>
+            </g>
+            <animateTransform attributeName="transform" type="translate"
+              values="-30 130; 84 63; 84 77; 84 63; 84 71; 84 85; 84 71; 96 82; 96 96; 96 82; 104 82; 104 96; 104 82; 116 71; 116 85; 116 71; 116 63; 116 77; 116 63"
+              keyTimes="0; .06; .117; .16; .205; .25; .295; .34; .383; .43; .475; .517; .56; .605; .65; .70; .74; .783; 1"
+              dur="3s" fill="freeze"/>
+          </g>
+        </g>
+      </svg>
+      <div class="boot__logo">ТЕЛЕ<em>МАСТЕР</em></div>
+      <div class="boot__bar"><span></span></div>
+      <div class="boot__skip">нажмите, чтобы пропустить</div>
+    </div>
+  </div>
+
+  <!-- Фоновые эффекты: тёплые свечения + живая плата -->
+  <div class="bg-fx" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <canvas class="circuit-canvas" id="circuitCanvas"></canvas>
+    <div class="grid-lines"></div>
+  </div>
+
+  <!-- Полоса прогресса чтения -->
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+  <!-- ============ ВЕРХНЯЯ ИНФОРМАЦИОННАЯ ПОЛОСА ============ -->
+  <div class="topbar">
+    <div class="container topbar__inner">
+      <span>Отправляем заказы каждый день · Самовывоз со склада</span>
+      <span class="topbar__links">
+        <a href="mailto:sales@telemaster.ru">sales@telemaster.ru</a>
+        <a href="tel:88005550123"><b>8 800 555-01-23</b></a>
+      </span>
+    </div>
+  </div>
+
+  <!-- ============ HEADER ============ -->
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#hero" class="logo" aria-label="ТЕЛЕМАСТЕР — на главную">
+        <span class="logo__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></svg>
+        </span>
+        <span class="logo__text">ТЕЛЕ<em>МАСТЕР</em></span>
+        <span class="demo-badge" aria-label="Демо-версия">DEMO</span>
+      </a>
+
+      <form class="search" role="search" id="searchForm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" id="searchInput" name="q" placeholder="Поиск по артикулу или названию…" aria-label="Поиск по каталогу">
+      </form>
+
+      <nav class="nav" id="nav" aria-label="Основная навигация">
+        <a href="#/catalog" class="nav__link">Каталог</a>
+        <a href="#hits" class="nav__link">Хиты</a>
+        <a href="#advantages" class="nav__link">Доставка</a>
+        <a href="#reviews" class="nav__link">Отзывы</a>
+        <a href="#faq" class="nav__link">FAQ</a>
+        <a href="#contacts" class="nav__link">Контакты</a>
+        <a href="tel:88005550123" class="nav__phone">8 800 555-01-23</a>
+      </nav>
+
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Переключить тему">
+        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5z"/></svg>
+        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+
+      <button class="login-btn" id="loginBtn" type="button" aria-label="Войти в личный кабинет">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+        <span class="login-btn__label">Войти</span>
+      </button>
+
+      <a href="#/cart" class="cart" id="cartBtn" aria-label="Корзина">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1.5 12.5a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>
+        <span class="cart__count" id="cartCount" hidden>0</span>
+      </a>
+
+      <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Полоса категорий: как у больших магазинов компонентов -->
+  <nav class="catnav" aria-label="Категории каталога">
+    <div class="container catnav__inner">
+      <a href="#/catalog" class="catnav__link">Все товары</a>
+      <a href="#/category/mcu" class="catnav__link">Микроконтроллеры</a>
+      <a href="#/category/ic" class="catnav__link">Микросхемы</a>
+      <a href="#/category/passive" class="catnav__link">Резисторы и конденсаторы</a>
+      <a href="#/category/sensors" class="catnav__link">Датчики и модули</a>
+      <a href="#/category/conn" class="catnav__link">Разъёмы и клеммы</a>
+      <a href="#/category/tools" class="catnav__link">Инструмент и пайка</a>
+    </div>
+  </nav>
+
+  <!-- Поиск для мобильных: в шапке он скрыт -->
+  <div class="msearch">
+    <div class="container">
+      <form class="search search--full" role="search" id="searchFormMobile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" name="q" placeholder="Поиск по артикулу или названию…" aria-label="Поиск по каталогу">
+      </form>
+    </div>
+  </div>
+
+  <main id="homeMain">
+    <!-- ============ HERO ============ -->
+      <section class="hero section" id="hero">
+      <div class="hero__bulb is-lit" title="Нажми на лампу или рубильник">
+        <canvas id="bulbCanvas" aria-hidden="true"></canvas>
+        <button class="breaker" id="lampSwitch" aria-label="Автомат: включить или выключить свет">
+          <span class="breaker__body">
+            <span class="breaker__window"></span>
+            <span class="breaker__lever"></span>
+          </span>
+          <span class="breaker__caption">СВЕТ</span>
+        </button>
+      </div>
+      <svg class="hero__chipbg" viewBox="0 0 320 320" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <rect x="110" y="110" width="100" height="100" rx="8"/>
+        <rect x="140" y="140" width="40" height="40" rx="3"/>
+        <path d="M140 155h-14M140 165h-14M180 155h14M180 165h14M155 140v-14M165 140v-14M155 180v14M165 180v14"/>
+        <path d="M122 110V84M142 110V84M162 110V84M182 110V84M198 110V84M122 210v26M142 210v26M162 210v26M182 210v26M198 210v26M110 122H84M110 142H84M110 162H84M110 182H84M210 122h26M210 142h26M210 162h26M210 182h26"/>
+        <circle cx="122" cy="122" r="2.5" fill="currentColor" stroke="none"/>
+        <path class="hero__chipflow" d="M84 60h40l16 16M236 260h-40l-16 -16M60 236v-40l16 -16M260 84v40l-16 16"/>
+      </svg>
+      <div class="container hero__inner">
+        <div class="hero__content">
+          <div class="hero__badge reveal">
+            <span class="pulse-dot"></span>
+            Всё в наличии — отправляем заказы каждый день
+          </div>
+          <h1 class="hero__title reveal">
+            Радиодетали и электроника для <span class="hl">мастеров и&nbsp;радиолюбителей</span>
+          </h1>
+          <p class="hero__text reveal">
+            Микросхемы, датчики, наборы, провода и инструмент. Берите хоть один резистор —
+            отправим по Крыму или отдадим самовывозом в день заказа.
+          </p>
+          <div class="hero__actions reveal">
+            <a href="#catalog" class="btn btn--primary">
+              Каталог продукции
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a href="https://t.me/telemaster" target="_blank" rel="noopener" class="btn btn--ghost">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.9 8.9 0 0 1-3.8-.9L3 21l2.1-5.6a8 8 0 0 1-1-3.9A8.4 8.4 0 0 1 12.5 3.2 8.4 8.4 0 0 1 21 11.5z"/></svg>
+              Написать в Telegram
+            </a>
+          </div>
+
+          <a href="https://t.me/telemaster" target="_blank" rel="noopener" class="master-card reveal">
+            <span class="master-card__ava">TM</span>
+            <span class="master-card__txt"><b>Спросите мастера</b><span>подберём деталь и аналог за час</span></span>
+            <span class="master-card__go">→</span>
+          </a>
+
+          <ul class="hero__stats reveal">
+            <li>
+              <b class="stat-num" data-count="12000" data-suffix="+">0</b>
+              <span>наименований<br>на складе</span>
+            </li>
+            <li>
+              <b class="stat-num" data-count="15000" data-suffix="+">0</b>
+              <span>заказов<br>уже отправлено</span>
+            </li>
+            <li>
+              <b class="stat-num" data-count="24">0</b>
+              <span>часа на сборку<br>и отгрузку</span>
+            </li>
+            <li>
+              <b class="stat-num" data-count="49" data-decimal="1" data-suffix=" ★">0</b>
+              <span>средняя оценка<br>покупателей</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Витринный блок -->
+        <div class="hero__visual reveal" data-anim="zoom" aria-hidden="true">
+          <div class="hero__shapes" aria-hidden="true">
+            <span class="shape shape--1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></svg></span>
+            <span class="shape shape--2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 12h3l2-5 3 10 3-14 3 12 2-3h4"/></svg></span>
+            <span class="shape shape--3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v3a4 4 0 0 0 8 0V3M12 10v11M8 21h8"/><circle cx="12" cy="14" r="2"/></svg></span>
+            <span class="shape shape--4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4L15 12l-3-3 2.7-2.7z"/></svg></span>
+          </div>
+          <div class="showcase">
+            <div class="showcase__chip">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></svg>
+              <b>STM32F103C8T6</b>
+              <span>Микроконтроллер · 72 МГц</span>
+              <em>420 ₽</em>
+            </div>
+            <div class="showcase__chip showcase__chip--alt">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 12h2m12 0h2M8 12a4 4 0 0 1 8 0"/><rect x="9" y="8" width="6" height="8" rx="1"/></svg>
+              <b>Датчики и сенсоры</b>
+              <span>DS18B20, DHT22, BMP280</span>
+              <em>от 150 ₽</em>
+            </div>
+            <div class="showcase__chip showcase__chip--alt2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 3v18M7 7h10M7 17h10"/><circle cx="12" cy="12" r="2.5"/></svg>
+              <b>Пассивные компоненты</b>
+              <span>Резисторы · конденсаторы · дроссели</span>
+              <em>от 1 ₽</em>
+            </div>
+          </div>
+          <div class="chip chip-1">✓ Только оригинальные партии</div>
+          <div class="chip chip-2">📦 Отгрузка в день оплаты</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ БЕГУЩАЯ СТРОКА БРЕНДОВ ============ -->
+    <div class="marquee" aria-label="Поставляемые бренды">
+      <div class="marquee__track">
+        <span>SAMSUNG</span><span class="dot">●</span>
+        <span>TDK</span><span class="dot">●</span>
+        <span>MURATA</span><span class="dot">●</span>
+        <span>VISHAY</span><span class="dot">●</span>
+        <span>STM</span><span class="dot">●</span>
+        <span>MICROCHIP</span><span class="dot">●</span>
+        <span>OMRON</span><span class="dot">●</span>
+        <span>PHOENIX CONTACT</span><span class="dot">●</span>
+        <span>ABB</span><span class="dot">●</span>
+        <span>LEGRAND</span><span class="dot">●</span>
+        <span>WAGO</span><span class="dot">●</span>
+        <span>IEK</span><span class="dot">●</span>
+        <!-- дубликат для бесшовности -->
+        <span>SAMSUNG</span><span class="dot">●</span>
+        <span>TDK</span><span class="dot">●</span>
+        <span>MURATA</span><span class="dot">●</span>
+        <span>VISHAY</span><span class="dot">●</span>
+        <span>STM</span><span class="dot">●</span>
+        <span>MICROCHIP</span><span class="dot">●</span>
+        <span>OMRON</span><span class="dot">●</span>
+        <span>PHOENIX CONTACT</span><span class="dot">●</span>
+        <span>ABB</span><span class="dot">●</span>
+        <span>LEGRAND</span><span class="dot">●</span>
+        <span>WAGO</span><span class="dot">●</span>
+        <span>IEK</span><span class="dot">●</span>
+      </div>
+    </div>
+
+    <!-- ============ ПРОМО-БАННЕРЫ ============ -->
+    <div class="promo">
+      <div class="container promo__grid">
+        <a href="#/catalog" class="promo-card promo-card--red reveal">
+          <b>−25% на опт</b>
+          <span>От 10 шт одной позиции — скидки уже в корзине</span>
+          <i>Выбрать товары →</i>
+        </a>
+        <a href="#advantages" class="promo-card reveal">
+          <b>0 ₽ доставка</b>
+          <span>Заказы от 3 000 ₽ едут по Крыму бесплатно</span>
+          <i>Как получить →</i>
+        </a>
+        <a href="#contacts" class="promo-card reveal">
+          <b>Самовывоз сегодня</b>
+          <span>Забирайте в Крыму — отдадим в день заказа</span>
+          <i>Задать вопрос →</i>
+        </a>
+      </div>
+      <div class="container steps">
+        <div class="step reveal">
+          <span>01</span>
+          <div><b>Выберите товар</b><p>Хоть один резистор — всё в наличии</p></div>
+        </div>
+        <div class="step reveal">
+          <span>02</span>
+          <div><b>Оформите за минуту</b><p>Имя, телефон и способ доставки</p></div>
+        </div>
+        <div class="step reveal">
+          <span>03</span>
+          <div><b>Получите по Крыму</b><p>Курьер, почта или самовывоз</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ КАТАЛОГ / КАТЕГОРИИ ============ -->
+    <section class="section" id="catalog">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-tag">Каталог</span>
+          <div class="section-title-wrap reveal">
+            <span class="section-tri"></span>
+            <h2 class="section-title">Всё для разработки и производства</h2>
+            <span class="section-tri"></span>
+          </div>
+          <p class="section-text">Честные остатки, поштучная отгрузка и готовые наборы — для макетки, ремонта и своих проектов.</p>
+        </div>
+
+        <div class="cards-grid">
+          <a href="#/category/mcu" class="card reveal">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></svg>
+            </div>
+            <h3>Микроконтроллеры</h3>
+            <p>STM, AVR, ESP32, PIC — от отладочных плат до промышленных серий.</p>
+            <div class="card__meta"><span class="price">1 240 позиций</span><span class="card__link">Смотреть →</span></div>
+          </a>
+
+          <a href="#/category/ic" class="card reveal">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="8" rx="2"/><path d="M8 8V5M12 8V5M16 8V5M8 19v-3M12 19v-3M16 19v-3"/></svg>
+            </div>
+            <h3>Микросхемы</h3>
+            <p>Операционные усилители, драйверы, стабилизаторы, логика, память.</p>
+            <div class="card__meta"><span class="price">3 850 позиций</span><span class="card__link">Смотреть →</span></div>
+          </a>
+
+          <a href="#/category/passive" class="card reveal">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 12h3l2-5 3 10 3-14 3 12 2-3h4"/></svg>
+            </div>
+            <h3>Резисторы и конденсаторы</h3>
+            <p>Выводные и SMD-компоненты любых номиналов, наборы для макетирования.</p>
+            <div class="card__meta"><span class="price">4 300 позиций</span><span class="card__link">Смотреть →</span></div>
+          </a>
+
+          <a href="#/category/sensors" class="card reveal">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v3a4 4 0 0 0 8 0V3M12 10v11M8 21h8"/><circle cx="12" cy="14" r="2"/></svg>
+            </div>
+            <h3>Датчики и модули</h3>
+            <p>Температура, влажность, давление, движение, ток — для IoT и АСУ ТП.</p>
+            <div class="card__meta"><span class="price">620 позиций</span><span class="card__link">Смотреть →</span></div>
+          </a>
+
+          <a href="#/category/conn" class="card reveal">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="8" width="6" height="8" rx="1"/><rect x="15" y="8" width="6" height="8" rx="1"/><path d="M9 12h6M6 8V4M18 8V4M6 20v-4M18 20v-4"/></svg>
+            </div>
+            <h3>Разъёмы и клеммы</h3>
+            <p>Клеммники, DIN-рейки, клеммы WAGO, соединители и колодки.</p>
+            <div class="card__meta"><span class="price">1 780 позиций</span><span class="card__link">Смотреть →</span></div>
+          </a>
+
+          <a href="#/category/tools" class="card reveal">
+            <div class="card__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4L15 12l-3-3 2.7-2.7z"/></svg>
+            </div>
+            <h3>Инструмент и пайка</h3>
+            <p>Паяльные станции, припой, флюсы, стрипперы, мультиметры, БП.</p>
+            <div class="card__meta"><span class="price">540 позиций</span><span class="card__link">Смотреть →</span></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VOID-ПОЛОСА: чистая типографика на чёрном ============ -->
+    <section class="void">
+      <div class="container void__inner void__inner--split">
+        <canvas class="void__canvas" id="voidCanvas" aria-hidden="true"></canvas>
+        <div class="void__text">
+          <p class="void__eyebrow reveal">/ соберём вместе</p>
+          <h2 class="void__title reveal">От одного <em>резистора</em> —<br>до полного набора для проекта</h2>
+          <a class="void__link reveal" href="#/catalog">Собрать набор →</a>
+        </div>
+        <div class="void__chipwrap">
+          <canvas class="void__chip" id="chipCanvas" aria-hidden="true"></canvas>
+          <p class="void__hint">3D-чип из созвездия — тронь, клик раскрутит</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ХИТЫ ПРОДАЖ ============ -->
+    <section class="section section--beige" id="hits">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-tag">Хиты продаж</span>
+          <div class="section-title-wrap reveal">
+            <span class="section-tri"></span>
+            <h2 class="section-title">Покупают чаще всего</h2>
+            <span class="section-tri"></span>
+          </div>
+          <p class="section-text">Цены указаны для розницы. Для оптовых партий от 10 шт — специальные условия в прайс-листе.</p>
+        </div>
+
+        <div class="products">
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock">В наличии</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></svg>
+            </div>
+            <span class="product__sku">Арт. STM-F103-C8T6</span>
+            <h3><a href="#/product/stm32f103">Микроконтроллер STM32F103C8T6</a></h3>
+            <div class="product__meta">
+              <span class="product__price">420 ₽</span>
+              <button class="add-to-cart" type="button" data-add="stm32f103">В корзину</button>
+            </div>
+          </article>
+
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock">В наличии</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 7V4M18 7V4M6 20v-3M18 20v-3"/></svg>
+            </div>
+            <span class="product__sku">Арт. ESP32-WROOM-32</span>
+            <h3><a href="#/product/esp32">Модуль ESP32-WROOM-32 с Wi-Fi и Bluetooth</a></h3>
+            <div class="product__meta">
+              <span class="product__price">560 ₽</span>
+              <button class="add-to-cart" type="button" data-add="esp32">В корзину</button>
+            </div>
+          </article>
+
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock product__stock--few">Осталось 7 уп.</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2 12h3l2-5 3 10 3-14 3 12 2-3h4"/></svg>
+            </div>
+            <span class="product__sku">Арт. R-MF50-610</span>
+            <h3><a href="#/product/mf50set">Набор резисторов MF-50W, 30 номиналов, 610 шт</a></h3>
+            <div class="product__meta">
+              <span class="product__price">890 ₽ <s>1 090 ₽</s></span>
+              <button class="add-to-cart" type="button" data-add="mf50set">В корзину</button>
+            </div>
+          </article>
+
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock">В наличии</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M7 4h4l1 3h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M9 13l2 2 4-4"/></svg>
+            </div>
+            <span class="product__sku">Арт. C-KER-300</span>
+            <h3><a href="#/product/ker300">Набор керамических конденсаторов, 24 номинала, 300 шт</a></h3>
+            <div class="product__meta">
+              <span class="product__price">640 ₽</span>
+              <button class="add-to-cart" type="button" data-add="ker300">В корзину</button>
+            </div>
+          </article>
+
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock">В наличии</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M8 3v3a4 4 0 0 0 8 0V3M12 10v11M8 21h8"/><circle cx="12" cy="14" r="2"/></svg>
+            </div>
+            <span class="product__sku">Арт. S-DS18B20</span>
+            <h3><a href="#/product/ds18b20">Датчик температуры DS18B20, влагозащищённый</a></h3>
+            <div class="product__meta">
+              <span class="product__price">150 ₽</span>
+              <button class="add-to-cart" type="button" data-add="ds18b20">В корзину</button>
+            </div>
+          </article>
+
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock">В наличии</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="3" y="9" width="18" height="8" rx="2"/><circle cx="8" cy="13" r="1.6"/><circle cx="13" cy="13" r="1.6"/><path d="M17 11v4M6 9V6M18 9V6"/></svg>
+            </div>
+            <span class="product__sku">Арт. REL-5V-4CH</span>
+            <h3><a href="#/product/rel4ch">Модуль реле 5 В, 4 канала, с оптопарой</a></h3>
+            <div class="product__meta">
+              <span class="product__price">340 ₽</span>
+              <button class="add-to-cart" type="button" data-add="rel4ch">В корзину</button>
+            </div>
+          </article>
+
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock">В наличии</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M11 5v14M15 5v14M19 5v14M3 9h18M3 13h18M3 17h18" stroke-width="0.8"/></svg>
+            </div>
+            <span class="product__sku">Арт. BB-830</span>
+            <h3><a href="#/product/bb830">Макетная плата 830 точек + шины питания</a></h3>
+            <div class="product__meta">
+              <span class="product__price">190 ₽</span>
+              <button class="add-to-cart" type="button" data-add="bb830">В корзину</button>
+            </div>
+          </article>
+
+          <article class="product reveal">
+            <div class="product__img">
+              <span class="product__stock product__stock--few">Осталось 12 уп.</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 14c3-6 6 2 9-4M4 18c3-6 6 2 9-4M15 6l5 5M17 4l3 3"/></svg>
+            </div>
+            <span class="product__sku">Арт. W-DUP-120</span>
+            <h3><a href="#/product/dupont">Провода Dupont «мама-мама», 20 см, 120 шт</a></h3>
+            <div class="product__meta">
+              <span class="product__price">230 ₽</span>
+              <button class="add-to-cart" type="button" data-add="dupont">В корзину</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ПРЕИМУЩЕСТВА ============ -->
+    <section class="section" id="advantages">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-tag">Почему мы</span>
+          <div class="section-title-wrap reveal">
+            <span class="section-tri"></span>
+            <h2 class="section-title">Покупать у нас просто</h2>
+            <span class="section-tri"></span>
+          </div>
+        </div>
+
+        <div class="adv-grid">
+          <div class="adv adv--map reveal">
+            <div class="adv__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="14" height="10" rx="1.5"/><path d="M15 9h4l3 3v4h-7M5.5 19a1.8 1.8 0 1 0 0-.01M17.5 19a1.8 1.8 0 1 0 0-.01"/></svg>
+            </div>
+            <b>Доставка 1–3 дня по Крыму</b>
+            <ul class="tri-bullets" style="margin: 8px 0 0;">
+              <li>Курьер, почта или самовывоз</li>
+              <li>Заказы от 3 000 ₽ — бесплатно</li>
+            </ul>
+            <div class="adv__map"><canvas id="crimeaCanvas" aria-hidden="true"></canvas></div>
+          </div>
+          <div class="adv reveal">
+            <div class="adv__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7l-5-5z"/><path d="M14 2v5h5M9 13h6M9 17h4"/></svg>
+            </div>
+            <b>Оплата как удобно</b>
+            <ul class="tri-bullets" style="margin: 8px 0 0;">
+              <li>Картой онлайн, через СБП или наличными</li>
+              <li>Без счетов и бюрократии</li>
+            </ul>
+          </div>
+          <div class="adv reveal">
+            <div class="adv__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>
+            </div>
+            <b>Возврат 30 дней</b>
+            <ul class="tri-bullets" style="margin: 8px 0 0;">
+              <li>Не подошло — вернём деньги</li>
+              <li>Брак заменим за наш счёт, без споров</li>
+            </ul>
+          </div>
+          <div class="adv reveal">
+            <div class="adv__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.3 5.5.7-4 4 1 5.8-5-2.8-5 2.8 1-5.8-4-4 5.5-.7L12 3z"/></svg>
+            </div>
+            <b>Поможем с выбором</b>
+            <ul class="tri-bullets" style="margin: 8px 0 0;">
+              <li>Подскажем аналог дешевле</li>
+              <li>Ответим в Telegram — бесплатно и по делу</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ОТЗЫВЫ ============ -->
+    <section class="section section--beige" id="reviews">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-tag">Отзывы</span>
+          <div class="section-title-wrap reveal">
+            <span class="section-tri"></span>
+            <h2 class="section-title">Нам доверяют покупатели</h2>
+            <span class="section-tri"></span>
+          </div>
+        </div>
+
+        <div class="reviews">
+          <article class="review reveal">
+            <div class="review__stars" aria-label="Оценка 5 из 5">★★★★★</div>
+            <div class="card__stars" aria-hidden="true">
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+            </div>
+            <p>«Заказываю компоненты для самодельных станков и аудиотехники. За полгода — ни одной подделки и ни одного срыва срока. Упаковывают как в лучших магазинах.»</p>
+            <div class="review__author">
+              <span class="review__avatar">С</span>
+              <div><b>Сергей П.</b><span>радиолюбитель со стажем</span></div>
+            </div>
+          </article>
+
+          <article class="review reveal">
+            <div class="review__stars" aria-label="Оценка 5 из 5">★★★★★</div>
+            <div class="card__stars" aria-hidden="true">
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+            </div>
+            <p>«Беру наборы резисторов и конденсаторов для домашней мастерской. Цена ниже, чем на маркетплейсах, номиналы промаркированы честно. Заказ уходит в день оплаты — уже проверил трижды.»</p>
+            <div class="review__author">
+              <span class="review__avatar">М</span>
+              <div><b>Марат Ж.</b><span>домашний мастер</span></div>
+            </div>
+          </article>
+
+          <article class="review reveal">
+            <div class="review__stars" aria-label="Оценка 5 из 5">★★★★★</div>
+            <div class="card__stars" aria-hidden="true">
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 10 10"><path d="M5 0.6l1.35 2.9 3.05.4-2.25 2.1.55 3.05L5 7.55 2.3 9.05l.55-3.05-2.25-2.1 3.05-.4z" fill="currentColor"/></svg>
+            </div>
+            <p>«Заказывал ESP32 и датчики для дипломного проекта. Менеджер помог подобрать аналоги дешевле, посылка дошла за три дня. Теперь всем группе рекомендую.»</p>
+            <div class="review__author">
+              <span class="review__avatar">А</span>
+              <div><b>Анна К.</b><span>студентка радиотехнического вуза</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="section" id="faq">
+      <div class="container container--narrow">
+        <div class="section-head reveal">
+          <span class="section-tag">FAQ</span>
+          <div class="section-title-wrap reveal">
+            <span class="section-tri"></span>
+            <h2 class="section-title">Частые вопросы</h2>
+            <span class="section-tri"></span>
+          </div>
+        </div>
+
+        <div class="faq">
+          <details class="faq__item reveal">
+            <summary>Какая минимальная сумма заказа?
+              <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="faq__body"><p>Минимальной суммы нет — отправим хоть один резистор. При заказе от 3 000 ₽ доставка по Крыму бесплатная.</p></div>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Как оплатить заказ?
+              <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="faq__body"><p>Картой онлайн, через СБП или наличными при получении. Чек приходит на почту автоматически — всё прозрачно.</p></div>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Когда вы отгружаете заказ?
+              <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="faq__body"><p>Позиции «В наличии» собираем и передаём в доставку в течение 24 часов после оплаты. Под заказ — от 5 до 10 рабочих дней.</p></div>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Что с гарантией и возвратом?
+              <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="faq__body"><p>30 дней на возврат без объяснения причин — компоненты должны сохранить товарный вид и упаковку. Брак заменим за наш счёт или вернём деньги.</p></div>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Есть ли скидки?
+              <svg class="faq__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </summary>
+            <div class="faq__body"><p>Да: от 10 шт одной позиции — оптовая цена со скидкой до 25%. А после третьего заказа дадим постоянную скидку 5% на всё.</p></div>
+          </details>
+        </div>
+        <div class="tv-widget reveal">
+          <div class="tv-widget__screen"><canvas data-model3d="tv" aria-hidden="true"></canvas></div>
+          <div>
+            <b>Не помогло? Стукните по телевизору</b>
+            <span>Классика работает: помехи пропадут на 6 секунд. Не пропадут — напишите нам в Telegram.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ КОНТАКТЫ / ПРАЙС ============ -->
+    <section class="section" id="contacts">
+      <canvas class="cta__stars" id="ctaCanvas" aria-hidden="true"></canvas>
+      <div class="container">
+        <div class="cta">
+          <div class="cta__info reveal" data-anim="left">
+            <span class="section-tag">Контакты</span>
+            <h2 class="section-title">Не нашли деталь? Мы её найдём</h2>
+            <p class="section-text">Опишите, что нужно, — проверим наличие, подскажем цену и аналоги. Отвечаем в течение часа в рабочее время.</p>
+
+            <ul class="cta__list">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.5 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+                <a href="tel:88005550123">8 800 555-01-23 — бесплатно по РФ</a>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+                <a href="mailto:sales@telemaster.ru">sales@telemaster.ru</a>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.9 8.9 0 0 1-3.8-.9L3 21l2.1-5.6a8 8 0 0 1-1-3.9A8.4 8.4 0 0 1 12.5 3.2 8.4 8.4 0 0 1 21 11.5z"/></svg>
+                <a href="https://t.me/telemaster" target="_blank" rel="noopener">Telegram: @telemaster</a>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span>Пн–Пт 9:00–19:00, Сб 10:00–15:00</span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>Самовывоз в Крыму — адрес уточняйте у менеджера</span>
+              </li>
+            </ul>
+          </div>
+
+          <form class="cta__form reveal" data-anim="right" id="leadForm" novalidate>
+            <h3>Задать вопрос</h3>
+            <label>
+              <span>Ваше имя</span>
+              <input type="text" name="name" placeholder="Иван" required>
+            </label>
+            <label>
+              <span>Телефон или e-mail</span>
+              <input type="text" name="phone" placeholder="+7 (___) ___-__-__" required>
+            </label>
+            <label>
+              <span>Как удобнее ответить?</span>
+              <select name="contact">
+                <option value="">Выберите вариант</option>
+                <option>Telegram</option>
+                <option>Звонок</option>
+                <option>WhatsApp</option>
+                <option>E-mail</option>
+              </select>
+            </label>
+            <button type="submit" class="btn btn--primary btn--full">Отправить заявку</button>
+            <p class="cta__note">Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных</p>
+            <div class="form-success" id="formSuccess" hidden>
+              <b>✓ Заявка принята!</b>
+              <span>Ответим в течение часа в рабочее время.</span>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Динамические страницы: каталог, категория, корзина, кабинет -->
+  <main id="pageMain" hidden></main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <canvas class="footer__stars" id="footCanvas" aria-hidden="true"></canvas>
+    <div class="container footer__inner">
+      <div class="footer__col footer__brand">
+        <a href="#hero" class="logo">
+          <span class="logo__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/></svg>
+          </span>
+          <span class="logo__text">ТЕЛЕ<em>МАСТЕР</em></span>
+        </a>
+        <p>Магазин радиокомпонентов для мастеров, инженеров и радиолюбителей. Работаем с 2014 года — от одного резистора до полного набора для проекта.</p>
+      </div>
+      <nav class="footer__col" aria-label="Каталог в подвале">
+        <b>Покупателям</b>
+        <a href="#/catalog">Каталог</a>
+        <a href="#hits">Хиты продаж</a>
+        <a href="#advantages">Доставка и оплата</a>
+        <a href="#faq">Гарантия и возврат</a>
+      </nav>
+      <nav class="footer__col" aria-label="Компания в подвале">
+        <b>Компания</b>
+        <a href="#reviews">Отзывы</a>
+        <a href="#contacts">Контакты</a>
+        <a href="#contacts">Помощь с подбором</a>
+        <a href="#faq">Возврат и гарантия</a>
+      </nav>
+      <div class="footer__col">
+        <b>Склад и офис</b>
+        <span>Республика Крым, самовывоз</span>
+        <a href="tel:88005550123">8 800 555-01-23</a>
+        <a href="mailto:sales@telemaster.ru">sales@telemaster.ru</a>
+      </div>
+    </div>
+    <div class="container footer__bottom">
+      <span>© 2026 ТЕЛЕМАСТЕР · Магазин электро- и радиокомпонентов</span>
+      <span>Демо-версия · данные хранятся в localStorage</span>
+      <span>Цены на сайте не являются публичной офертой</span>
+      <span class="footer-build" id="footerBuild">…</span>
+      <a href="#/admin" class="footer-admin">Админпанель</a>
+    </div>
+  </footer>
+
+  <!-- ============ МОДАЛКА ВХОДА ============ -->
+  <div class="modal" id="authModal" hidden>
+    <div class="modal__backdrop" data-close-modal></div>
+    <canvas class="modal__stars" id="authCanvas" aria-hidden="true"></canvas>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-label="Вход в личный кабинет">
+      <button class="modal__close" type="button" data-close-modal aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+
+      <div class="auth">
+        <div class="auth__head">
+          <span class="auth__logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M9 2.5V7M15 2.5V7M9 17v4.5M15 17v4.5M2.5 9H7M2.5 15H7M17 9h4.5M17 15h4.5"/></svg>
+          </span>
+          <div class="eyebrow">Telemaster · вход</div>
+          <h3>Личный кабинет</h3>
+          <p>Заказы, избранное и бонусы — в одном месте</p>
+        </div>
+
+        <div class="auth__tabs" id="authTabs" data-active="login">
+          <button class="auth__tab is-active" type="button" data-tab="login">Вход</button>
+          <button class="auth__tab" type="button" data-tab="signup">Регистрация</button>
+          <button class="auth__tab" type="button" data-tab="code">Код</button>
+          <span class="auth__tab-ink"></span>
+        </div>
+
+        <form class="auth__form" id="authForm" novalidate>
+          <label>
+            <span>Телефон</span>
+            <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" required autocomplete="tel">
+            <p class="field-err" hidden></p>
+          </label>
+          <label id="authPassField">
+            <span>Пароль</span>
+            <div class="pass-wrap">
+              <input type="password" name="password" placeholder="Минимум 4 символа" required minlength="4" autocomplete="current-password">
+              <button type="button" class="pass-eye" data-pass-eye>Показать</button>
+            </div>
+            <p class="field-err" hidden></p>
+          </label>
+          <button type="button" class="btn btn--ghost btn--full" id="smsBtn" hidden>Получить код</button>
+          <div class="sms-demo" id="smsDemo" hidden>Демо: ваш код <b id="smsCode">0000</b> — в проде придёт по SMS</div>
+          <label id="authCodeField" hidden>
+            <span>Код из SMS</span>
+            <input type="text" name="code" inputmode="numeric" placeholder="4 цифры" maxlength="4" autocomplete="one-time-code">
+            <p class="field-err" hidden></p>
+          </label>
+          <label id="authNameField" hidden>
+            <span>Как вас зовут?</span>
+            <input type="text" name="name" placeholder="Иван" autocomplete="name">
+            <p class="field-err" hidden></p>
+          </label>
+          <button type="submit" class="btn btn--primary btn--full auth__submit" id="authSubmit">
+            <span class="auth__submit-label" id="authSubmitLabel">Войти</span>
+          </button>
+          <p class="admin-err" id="authErr" hidden></p>
+          <div class="auth__or"><span>или</span></div>
+          <button type="button" class="btn btn--ghost btn--full" data-tg-login>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.3 8.9 8.9 0 0 1-3.8-.9L3 21l2.1-5.6a8 8 0 0 1-1-3.9A8.4 8.4 0 0 1 12.5 3.2 8.4 8.4 0 0 1 21 11.5z"/></svg>
+            Продолжить через Telegram
+          </button>
+          <div class="auth__providers">
+            <button type="button" class="btn btn--ghost" data-social="vk"><b>VK</b>&nbsp;Войти</button>
+            <button type="button" class="btn btn--ghost" data-social="gg"><b>G</b>&nbsp;Войти</button>
+          </div>
+          <p class="auth__hint">Демо-режим: аккаунты хранятся только в вашем браузере</p>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Плавающая связь: телефон + Telegram + живой статус -->
+  <div class="contact-fab" id="contactFab">
+    <div class="contact-fab__panel" id="contactFabPanel" hidden>
+      <b>Свяжитесь с нами</b>
+      <p class="contact-fab__status"><span class="dot" id="contactDot"></span><span id="contactStatus">…</span></p>
+      <a class="contact-fab__phone" href="tel:88005550123">8 800 555-01-23</a>
+      <a class="contact-fab__tg" href="https://t.me/telemaster" target="_blank" rel="noopener">Telegram: @telemaster</a>
+      <span class="contact-fab__hours">Пн–Пт 9:00–19:00, Сб 10:00–15:00</span>
+    </div>
+    <button class="contact-fab__btn" id="contactFabBtn" aria-label="Связаться с нами" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.5 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+    </button>
+  </div>
+
+  <script src="js/circuit-bg.js?v=6"></script>
+  <script src="js/constellation.js?v=38"></script>
+  <script src="js/pcb-field.js?v=1"></script>
+  <script src="js/data.js?v=2"></script>
+  <script src="js/main.js?v=61"></script>
+</body>
+</html>
