@@ -297,13 +297,20 @@
       updateCartBadge();
     },
     add(id, qty = 1) {
+      const p = findProduct(id);
+      if (!p) return;
       const cart = this.read();
-      cart[id] = (cart[id] || 0) + qty;
+      const max = Number.isFinite(p.stock) ? p.stock : 999999;
+      cart[id] = Math.min((cart[id] || 0) + qty, max);
+      if (cart[id] <= 0) delete cart[id];
       this.write(cart);
+      if (cart[id] === max && qty > 0) showToast(`Достигнут лимит: ${max} шт`);
     },
     setQty(id, qty) {
+      const p = findProduct(id);
+      const max = p && Number.isFinite(p.stock) ? p.stock : 999999;
       const cart = this.read();
-      if (qty <= 0) delete cart[id]; else cart[id] = qty;
+      if (qty <= 0) delete cart[id]; else cart[id] = Math.min(qty, max);
       this.write(cart);
     },
     remove(id) { this.setQty(id, 0); },
@@ -666,26 +673,13 @@
 
   const hashPass = async (salt, password) => {
     const data = salt + "::" + password;
-    try {
-      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
-      return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-    } catch {
-      // запасной хеш, если SubtleCrypto недоступен
-      let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-      for (let i = 0; i < data.length; i++) {
-        const ch = data.charCodeAt(i);
-        h1 = Math.imul(h1 ^ ch, 2654435761);
-        h2 = Math.imul(h2 ^ ch, 1597334677);
-      }
-      return (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16);
-    }
+    // SubtleCrypto обязателен; если недоступен — демо-вход недоступен (не маскируем слабым хешем)
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
   };
   const makeSalt = () => {
-    try {
-      return [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
-    } catch {
-      return String(Date.now());
-    }
+    const buf = crypto.getRandomValues(new Uint8Array(16));
+    return [...buf].map((b) => b.toString(16).padStart(2, "0")).join("");
   };
 
   const refreshLoginBtn = () => {
@@ -762,20 +756,44 @@
     });
   });
 
+  const SMS_TTL_MS = 2 * 60 * 1000;
+  const SMS_COOLDOWN_MS = 60 * 1000;
+  const SMS_MAX_ATTEMPTS = 3;
   if (smsBtn) smsBtn.addEventListener("click", () => {
-    const phone = authForm.elements.phone.value.trim();
-    if (normPhone(phone).length < 11) {
+    const phone = normPhone(authForm.elements.phone.value.trim());
+    if (phone.length < 11) {
       setFieldError(authForm.elements.phone, "Введите телефон полностью (11 цифр)");
       return;
     }
     setFieldError(authForm.elements.phone, "");
+    const rec = smsData[phone];
+    if (rec && Date.now() - rec.ts < SMS_COOLDOWN_MS) {
+      const wait = Math.ceil((SMS_COOLDOWN_MS - (Date.now() - rec.ts)) / 1000);
+      setFieldError(authForm.elements.phone, `Подождите ${wait} сек перед повтором`);
+      return;
+    }
     // здесь будет интеграция: POST /api/sms/send
-    const code = String(Math.floor(1000 + Math.random() * 9000));
-    smsData[normPhone(phone)] = { code, ts: Date.now() };
-    smsCodeEl.textContent = code;
+    let code = "";
+    try {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      code = String(1000 + (buf[0] % 9000));
+    } catch {
+      code = String(1000 + Math.floor(Math.random() * 9000));
+    }
+    smsData[phone] = { code, ts: Date.now(), attempts: 0 };
+    // DEMO: в проде код уходит в SMS, в браузере не показывается
+    // smsCodeEl.textContent = code; // убрано — не светим код в DOM
+    if (smsCodeEl) smsCodeEl.textContent = "••••";
+    if (smsDemo) {
+      smsDemo.hidden = false;
+      // показываем подсказку только в консоли для теста, не в вёрстке
+      try { console.info("[telemaster] demo sms code for", phone, ":", code); } catch { /* ignore */ }
+    }
     smsSent = true;
     syncAuthMode();
     authForm.elements.code.focus();
+    showToast("Код отправлен на " + phone.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, "+$1 ($2) $3-$4-$5") + " (демо: см. консоль)");
   });
 
   const authErr = document.getElementById("authErr");
@@ -892,8 +910,9 @@
       const rec = smsData[normPhone(phone)];
       const cfield = authForm.elements.code;
       if (!rec) { setFieldError(cfield, "Нажмите «Получить код»"); ok = false; }
-      else if (Date.now() - rec.ts > 5 * 60 * 1000) { setFieldError(cfield, "Код истёк — запросите новый"); ok = false; }
-      else if (cfield.value.trim() !== rec.code) { setFieldError(cfield, "Неверный код"); ok = false; }
+      else if (Date.now() - rec.ts > SMS_TTL_MS) { setFieldError(cfield, "Код истёк — запросите новый"); ok = false; }
+      else if ((rec.attempts || 0) >= SMS_MAX_ATTEMPTS) { setFieldError(cfield, "Превышено число попыток — запросите новый код"); ok = false; }
+      else if (cfield.value.trim() !== rec.code) { rec.attempts = (rec.attempts || 0) + 1; setFieldError(cfield, `Неверный код (попытка ${rec.attempts}/${SMS_MAX_ATTEMPTS})`); ok = false; }
       else setFieldError(cfield, "");
     }
     if (authErr) authErr.hidden = true;
@@ -1839,8 +1858,9 @@ const productCard = (p) => {
   };
 
   // здесь будет интеграция с CRM/оплатой: сейчас заказ сохраняется локально
+  // TODO(prod): пересчёт и списание стока — только на сервере (POST /api/orders)
   const placeOrder = (form) => {
-    const entries = Object.entries(cartStore.read());
+    let entries = Object.entries(cartStore.read());
     if (!entries.length) return;
     const name = form.elements.name.value.trim();
     const phone = form.elements.phone.value.trim();
@@ -1850,6 +1870,15 @@ const productCard = (p) => {
     form.elements.name.classList.toggle("is-error", name.length < 2);
     form.elements.phone.classList.toggle("is-error", phone.replace(/\D/g, "").length < 11);
     if (!ok) return;
+    // харденинг: кап по стоку на момент заказа + отсев несуществующих
+    entries = entries.map(([id, qty]) => {
+      const p = findProduct(id);
+      if (!p) return null;
+      const capped = Math.min(qty, Number.isFinite(p.stock) ? p.stock : qty);
+      if (capped <= 0) return null;
+      return [id, capped];
+    }).filter(Boolean);
+    if (!entries.length) { showToast("Корзина пуста или товар закончился"); return; }
     const delivery = form.elements.delivery.value;
     const subtotal = entries.reduce((sum, [id, qty]) => {
       const p = findProduct(id);
