@@ -2220,6 +2220,14 @@ const productCard = (p) => {
     } catch { /* ignore */ }
   };
 
+  // фолбек для :has() — старые браузеры без :has
+  document.addEventListener("change", (e) => {
+    const r = e.target.closest && e.target.closest(".co-radio");
+    if (!r || e.target.type !== "radio") return;
+    document.querySelectorAll(".co-radio").forEach((x) => x.classList.remove("is-checked"));
+    r.classList.add("is-checked");
+  });
+
   const getLeads = () => {
     if (!isAdmin()) return [];
     try { return JSON.parse(localStorage.getItem("tm-leads")) || []; } catch { return []; }
