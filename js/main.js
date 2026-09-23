@@ -503,11 +503,12 @@
     const phone = form.elements.phone;
     let valid = true;
 
-    [name, phone].forEach((field) => {
-      const filled = field.value.trim().length > 1;
-      field.classList.toggle("is-error", !filled);
-      if (!filled) valid = false;
-    });
+    const nameOk = /^[A-Za-zА-Яа-яЁё \-]{2,40}$/.test(name.value.trim());
+    const phoneOk = phone.value.trim().length >= 7 && phone.value.trim().length <= 32;
+    if (!nameOk) { name.classList.add("is-error"); valid = false; } else name.classList.remove("is-error");
+    if (!phoneOk) { phone.classList.add("is-error"); valid = false; } else phone.classList.remove("is-error");
+    const ch = form.elements.contact.value;
+    if (ch && !["Telegram","Звонок","WhatsApp","E-mail",""].includes(ch)) valid = false;
 
     if (!valid) return;
 
@@ -2603,10 +2604,10 @@ const productCard = (p) => {
       const name = f.elements.name.value.trim();
       const text = f.elements.text.value.trim();
       const err = document.getElementById("revErr");
-      const ok = name.length >= 2 && text.length >= 4;
-      if (err) { err.textContent = "Представьтесь и напишите пару слов о товаре"; err.hidden = ok; }
-      f.elements.name.classList.toggle("is-error", name.length < 2);
-      f.elements.text.classList.toggle("is-error", text.length < 4);
+      const ok = /^[A-Za-zА-Яа-яЁё \-]{2,40}$/.test(name) && text.length >= 4 && text.length <= 500;
+      if (err) { err.textContent = "Представьтесь и напишите пару слов о товаре (до 500 символов)"; err.hidden = ok; }
+      f.elements.name.classList.toggle("is-error", !/^[A-Za-zА-Яа-яЁё \-]{2,40}$/.test(name));
+      f.elements.text.classList.toggle("is-error", text.length < 4 || text.length > 500);
       if (!ok) return;
       // здесь будет интеграция: POST /api/reviews (модерация на сервере)
       const all = getReviews();

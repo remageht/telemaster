@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ТЕЛЕМАСТЕР — магазин электронных и радиокомпонентов</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.telegram.org;">
   <meta name="description" content="ТЕЛЕМАСТЕР — магазин радиокомпонентов для мастеров и радиолюбителей. 12 000+ наименований в наличии: микросхемы, датчики, наборы, провода. Отправка за 24 часа, доставка по Крыму и самовывоз.">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ru_RU">
@@ -803,11 +804,11 @@
             <h3>Задать вопрос</h3>
             <label>
               <span>Ваше имя</span>
-              <input type="text" name="name" placeholder="Иван" required>
+              <input type="text" name="name" placeholder="Иван" required maxlength="40" pattern="[A-Za-zА-Яа-яЁё \-]+">
             </label>
             <label>
               <span>Телефон или e-mail</span>
-              <input type="text" name="phone" placeholder="+7 (___) ___-__-__" required>
+              <input type="text" name="phone" placeholder="+7 (___) ___-__-__" required maxlength="32">
             </label>
             <label>
               <span>Как удобнее ответить?</span>
@@ -906,13 +907,13 @@
         <form class="auth__form" id="authForm" novalidate>
           <label>
             <span>Телефон</span>
-            <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" required autocomplete="tel">
+            <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" required autocomplete="tel" maxlength="20" pattern="\+?[0-9 \-\(\)]+">
             <p class="field-err" hidden></p>
           </label>
           <label id="authPassField">
             <span>Пароль</span>
             <div class="pass-wrap">
-              <input type="password" name="password" placeholder="Минимум 4 символа" required minlength="4" autocomplete="current-password">
+              <input type="password" name="password" placeholder="Минимум 4 символа" required minlength="4" maxlength="64" autocomplete="current-password">
               <button type="button" class="pass-eye" data-pass-eye>Показать</button>
             </div>
             <p class="field-err" hidden></p>
@@ -926,7 +927,7 @@
           </label>
           <label id="authNameField" hidden>
             <span>Как вас зовут?</span>
-            <input type="text" name="name" placeholder="Иван" autocomplete="name">
+            <input type="text" name="name" placeholder="Иван" autocomplete="name" maxlength="40" pattern="[A-Za-zА-Яа-яЁё \-]+">
             <p class="field-err" hidden></p>
           </label>
           <button type="submit" class="btn btn--primary btn--full auth__submit" id="authSubmit">
@@ -967,6 +968,6 @@
   <script src="js/constellation.js?v=38"></script>
   <script src="js/pcb-field.js?v=1"></script>
   <script src="js/data.js?v=2"></script>
-  <script src="js/main.js?v=64"></script>
+  <script src="js/main.js?v=65"></script>
 </body>
 </html>
