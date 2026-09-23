@@ -610,10 +610,13 @@
         ctx.globalAlpha = 1;
       }
       // объёмные модели: жирнее линия и выше пол мерцания — читаются издали
+      // лампа: почти без мерцания (эпилептологам — 0 вспышек)
       ctx.lineWidth = o.three ? 1.8 : 1.2;
-      const floor = o.three ? 0.45 : 0.25, ceil = o.three ? 0.55 : 0.55;
+      const isBulb = o.shape === "bulb";
+      const floor = isBulb ? 0.88 : (o.three ? 0.45 : 0.25), ceil = isBulb ? 0.12 : (o.three ? 0.55 : 0.55);
       for (const p of parts) {
-        const a = o.alpha * (floor + ceil * (0.5 + 0.5 * Math.sin((t / 1000) * p.ts + p.tw))) * (p.dal == null ? 1 : p.dal) * ((o.shape === "bulb" && p.fil && !o.lit) ? 0.12 : 1);
+        const flick = isBulb && reduced ? 0 : (floor + ceil * (0.5 + 0.5 * Math.sin((t / 1000) * p.ts + p.tw)));
+        const a = o.alpha * flick * (p.dal == null ? 1 : p.dal) * ((o.shape === "bulb" && p.fil && !o.lit) ? 0.12 : 1);
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
@@ -912,12 +915,14 @@
       shape: "bulb",
       three: true,
       toggleLit: true,
-      interactive: true,
+      interactive: false,
       bulbScale: 1,
       bx: 0.12,
       by: 0.8,
       drift: 0,
-      spinRate: 0.05,
+      damp: 4.8,
+      spring: 28,
+      spinRate: 0.018,
     });
       if (field) watchVisibility(bulbCanvas.parentElement, field);
   }
