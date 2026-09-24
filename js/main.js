@@ -1050,10 +1050,8 @@
   const ORDERS_KEY = "tm-orders";
 
   const { ICONS, ART, CATALOG, ALL } = window.TM;
-  // демо-админка: открытый пароль убран, проверка через hash + TTL.
-  // В продакшене — только серверная авторизация (POST /api/admin/login → JWT).
-  const ADMIN_PASSWORD_HASH = "15a7c0ff68a9da13f64228fbb0413b0a38699e4b9bf9efd31a47bcbdb6d4df1e"; // sha256("telemaster2026")
-  const ADMIN_TTL_MS = 30 * 60 * 1000;
+  // Этап 6: demo-hash удалён, только серверный JWT (POST /api/auth/login → is_admin)
+  const ADMIN_TTL_MS = 30 * 60 * 1000; // остался для совместимости, теперь exp из JWT
 
   const findProduct = (id) => getProducts().find((p) => p.id === id) || null;
 
@@ -2360,32 +2358,18 @@ const productCard = (p) => {
   let adminTab = "products";
 
   const isAdmin = () => {
-    // Этап 2: сначала JWT (is_admin), fallback — старый hash-сессия для оффлайна
+    // Этап 6: только JWT is_admin, hash-fallback удалён
     try {
       const tok = sessionStorage.getItem("tm-jwt");
-      if (tok) {
-        const b64 = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        const payload = JSON.parse(atob(b64));
-        if (payload.is_admin && payload.exp * 1000 > Date.now()) return true;
-      }
-    } catch { /* ignore */ }
-    try {
-      const raw = sessionStorage.getItem("tm-admin");
-      if (!raw) return false;
-      const sess = JSON.parse(raw);
-      if (!sess || sess.ok !== 1 || typeof sess.exp !== "number" || Date.now() > sess.exp) {
-        sessionStorage.removeItem("tm-admin");
-        return false;
-      }
-      return true;
-    } catch {
-      return false;
-    }
+      if (!tok) return false;
+      const b64 = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+      const payload = JSON.parse(atob(b64));
+      return !!(payload.is_admin && payload.exp * 1000 > Date.now());
+    } catch { return false; }
   };
   const setAdminSession = () => {
-    try {
-      sessionStorage.setItem("tm-admin", JSON.stringify({ ok: 1, exp: Date.now() + ADMIN_TTL_MS }));
-    } catch { /* ignore */ }
+    // deprecated: остался для совместимости, теперь админ — только JWT
+    try { sessionStorage.setItem("tm-admin", JSON.stringify({ ok: 1, exp: Date.now() + ADMIN_TTL_MS })); } catch { /* ignore */ }
   };
 
   // фолбек для :has() — старые браузеры без :has
@@ -2774,47 +2758,23 @@ const productCard = (p) => {
     }
     if (e.target.id === "adminSettingsForm") {
       e.preventDefault();
-      const f = e.target;
-      try {
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-          tgToken: f.elements.tgToken.value.trim(),
-          tgChat: f.elements.tgChat.value.trim(),
-        }));
-      } catch { /* ignore */ }
-      showToast("Настройки сохранены");
+      // Этап 6: токен больше не храним в браузере, только в backend/.env
+      showToast("С Этапа 3 токен — только в backend/.env (TELEGRAM_BOT_TOKEN). Поля ниже не используются.");
       return;
     }
     if (e.target.id === "adminLoginForm") {
       e.preventDefault();
       const input = e.target.elements.password;
       const raw = String(input.value || "");
-      // Этап 2 hybrid: пробуем API login admin, fallback — hash
-      if (USE_API) {
-        try {
-          const r = await fetch(`${API_BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: "admin", password: raw }) });
-          if (r.ok) {
-            const j = await r.json(); sessionStorage.setItem("tm-jwt", j.access_token); renderRoute(); return;
-          }
-          if (r.status === 401) { /* не тот пароль — пробуем hash fallback ниже */ }
-          else if (r.status >= 500) { /* сеть — fallback */ }
-          else { const j = await r.json().catch(() => ({})); input.value = ""; const err = document.getElementById("adminErr"); if (err) { err.textContent = j.detail || "Неверный пароль"; err.hidden = false; } return; }
-        } catch { /* network — fallback к hash */ }
-      }
-      let ok = false;
+      // Этап 6: только API, hash-fallback удалён
+      if (!USE_API) { input.value = ""; const err = document.getElementById("adminErr"); if (err) { err.textContent = "Требуется API (USE_API=true)"; err.hidden = false; } return; }
       try {
-        const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
-        const hex = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-        ok = hex === ADMIN_PASSWORD_HASH;
+        const r = await fetch(`${API_BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: "admin", password: raw }) });
+        if (r.ok) { const j = await r.json(); sessionStorage.setItem("tm-jwt", j.access_token); renderRoute(); return; }
+        const j = await r.json().catch(() => ({}));
+        input.value = ""; const err = document.getElementById("adminErr"); if (err) { err.textContent = j.detail || "Неверный пароль"; err.hidden = false; }
       } catch {
-        ok = false;
-      }
-      if (ok) {
-        setAdminSession();
-        renderRoute();
-      } else {
-        input.value = "";
-        const err = document.getElementById("adminErr");
-        if (err) err.hidden = false;
+        input.value = ""; const err = document.getElementById("adminErr"); if (err) { err.textContent = "Сервер недоступен"; err.hidden = false; }
       }
     }
     if (e.target.id === "adminProductForm") {
