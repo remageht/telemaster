@@ -43,6 +43,17 @@ def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 def require_admin(user=Depends(get_current_user)):
-    # Заглушка для Этапа 0: любой валидный токен считается админом.
-    # Этап 2: проверять user.is_admin / role == "admin"
+    if not user.get("payload", {}).get("is_admin"):
+        # пытаемся проверить по БД, если токен без флага
+        from app.models.user import User
+        from app.core.database import SessionLocal
+        try:
+            db = SessionLocal()
+            db_user = db.query(User).filter(User.phone == user.get("sub")).first()
+            if not db_user or not db_user.is_admin:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin required")
+        finally:
+            try: db.close()
+            except: pass
+        return user
     return user

@@ -3,32 +3,70 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import require_admin
 from app.models.order import Order
+from app.models.product import Product
 from app.schemas.order import OrderCreate
 import json
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
+FREE_FROM = 3000
+COURIER_FEE = 490
+CRIMEA_FEE = 350
+BULK_MIN = 10
+BULK_OFF = 0.25
+
+def delivery_fee(method: str, subtotal: int) -> int:
+    if method == "pickup" or subtotal >= FREE_FROM:
+        return 0
+    return CRIMEA_FEE if method == "crimea" else COURIER_FEE
+
+def line_price(price: int, qty: int) -> int:
+    return max(1, round(price * (1 - BULK_OFF))) if qty >= BULK_MIN else price
+
 @router.post("", status_code=201)
 def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
-    # Этап 1: сервер принимает то что прислал фронт, fee/total пересчитает фронт, но сохраняем как есть
-    # Этап 5: здесь будет проверка стока и пересчёт.
+    raw = payload.model_dump()
+    lines_in = raw.get("lines") or []
+    # Этап 5: серверный пересчёт и проверка стока
+    subtotal = 0
+    for ln in lines_in:
+        pid = ln.get("id")
+        qty = int(ln.get("qty", 0))
+        if not pid or qty <= 0:
+            raise HTTPException(status_code=400, detail=f"Invalid line {pid}")
+        prod = db.query(Product).filter(Product.id == pid).first()
+        if prod:
+            if prod.stock < qty:
+                raise HTTPException(status_code=400, detail=f"Недостаточно на складе: {prod.name} остаток {prod.stock}")
+            price = line_price(prod.price, qty)
+            subtotal += price * qty
+        else:
+            # продукта нет в БД (ещё не синхронизирован) — доверяем цене из payload
+            price = int(ln.get("price", 0))
+            subtotal += price * qty
+
+    fee = delivery_fee(raw.get("delivery", "pickup"), subtotal)
+    # скидку пока не считаем серверно (промокоды — отдельно), берём из payload если есть
+    discount = int(raw.get("discount", 0) or 0)
+    total = subtotal - discount + fee
+
     last = db.query(Order).order_by(Order.no.desc()).first()
     next_no = (last.no + 1) if last else 1043
-    # Заглушка для расчета — если lines нет, считаем по payload
-    subtotal = 0
-    fee = 0
-    total = 0
-    lines = []
-    # фронт шлёт lines через payload, но схема OrderCreate пока без них — достаём из raw
-    # Чтобы не ломать, пробуем взять из payload dict
-    raw = payload.model_dump()
-    # если фронт прислал lines/total, сохраним
+
+    # списание стока
+    for ln in lines_in:
+        prod = db.query(Product).filter(Product.id == ln.get("id")).first()
+        if prod:
+            prod.stock -= int(ln.get("qty", 0))
+            if prod.stock < 0:
+                prod.stock = 0
+
     order = Order(
         no=next_no,
-        items=raw.get("items", 0),
-        subtotal=raw.get("subtotal", 0),
-        fee=raw.get("fee", 0),
-        total=raw.get("total", 0) or raw.get("subtotal", 0),
+        items=int(raw.get("items", len(lines_in))),
+        subtotal=subtotal,
+        fee=fee,
+        total=total,
         name=raw.get("name", ""),
         phone=raw.get("phone", ""),
         delivery=raw.get("delivery", ""),
@@ -36,15 +74,12 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
         address=raw.get("address"),
         comment=raw.get("comment"),
         status="Собирается",
-        lines_json=json.dumps(raw.get("lines", []), ensure_ascii=False),
+        lines_json=json.dumps(lines_in, ensure_ascii=False),
     )
-    # если total не передан, считаем как subtotal+fee
-    if not order.total:
-        order.total = (order.subtotal or 0) + (order.fee or 0)
     db.add(order)
     db.commit()
     db.refresh(order)
-    return {"id": order.id, "no": order.no, "total": order.total, "status": order.status, "lines": json.loads(order.lines_json)}
+    return {"id": order.id, "no": order.no, "subtotal": subtotal, "fee": fee, "total": total, "discount": discount, "status": order.status, "lines": json.loads(order.lines_json)}
 
 @router.get("", dependencies=[Depends(require_admin)])
 def list_orders(db: Session = Depends(get_db)):

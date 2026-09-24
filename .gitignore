@@ -20,3 +20,13 @@ node_modules/
 .idea/
 .vscode/
 *.local
+
+# backend
+backend/__pycache__/
+backend/app/__pycache__/
+backend/*/ __pycache__/
+backend/telemaster.db
+backend/.venv/
+**/__pycache__/
+*.pyc
+

@@ -21,6 +21,16 @@ def get_db():
         db.close()
 
 def init_db():
-    # На Этапе 0 просто создаём таблицы; миграции (alembic) — позже
     from app.models import user, product, order, lead  # noqa: F401
+    from app.models.user import User
+    from app.core.security import get_password_hash
     Base.metadata.create_all(bind=engine)
+    # сид админа для Этапа 2: phone=admin, password=telemaster2026
+    try:
+        db = SessionLocal()
+        if not db.query(User).filter(User.phone == "admin").first():
+            db.add(User(phone="admin", name="Admin", password_hash=get_password_hash("telemaster2026"), is_admin=True))
+            db.commit()
+        db.close()
+    except Exception:
+        pass

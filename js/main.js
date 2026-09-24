@@ -962,21 +962,50 @@
     if (authErr) authErr.hidden = true;
     if (!ok) return;
 
+    // Этап 2 hybrid: пробуем API, при сети-ошибке — fallback localStorage
+    const tryApiAuth = async () => {
+      if (!USE_API) return null;
+      try {
+        if (isSignup) {
+          const r = await fetch(`${API_BASE}/api/auth/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, name, password }) });
+          if (!r.ok) { const j = await r.json().catch(() => ({})); if (r.status >= 500) throw new Error("api"); if (authErr) { authErr.textContent = j.detail || "Ошибка регистрации"; authErr.hidden = false; } return "handled"; }
+          const j = await r.json(); sessionStorage.setItem("tm-jwt", j.access_token); return j;
+        } else if (!isCode) {
+          const r = await fetch(`${API_BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, password }) });
+          if (!r.ok) { const j = await r.json().catch(() => ({})); if (r.status >= 500) throw new Error("api"); if (r.status === 401) { if (authErr) { authErr.textContent = j.detail || "Неверный пароль"; authErr.hidden = false; } return "handled"; } throw new Error("api"); }
+          const j = await r.json(); sessionStorage.setItem("tm-jwt", j.access_token); return j;
+        }
+      } catch { return null; }
+      return null;
+    };
     const users = getUsers();
     const key = normPhone(phone);
     authSubmit.classList.add("is-loading");
     try {
+      const apiRes = await tryApiAuth();
+      if (apiRes === "handled") return;
+      if (apiRes && apiRes.access_token) {
+        // API успех — создаём/обновляем локального пользователя для UI
+        if (isSignup) {
+          const salt = makeSalt(); users[key] = { name, phone, pass: await hashPass(salt, password), salt, created: Date.now() }; saveUsers(users);
+        } else if (isCode) {
+          if (!users[key]) { users[key] = { name: "Покупатель", phone, pass: "", salt: "", created: Date.now() }; saveUsers(users); }
+          delete smsData[key]; smsSent = false;
+        }
+        // если токен админский — isAdmin() уже увидит tm-jwt
+        doLoginSuccess(users[key] || { name, phone }, isSignup);
+        return;
+      }
+      // fallback localStorage
       if (isSignup) {
         if (users[key]) {
           if (authErr) { authErr.textContent = "Этот телефон уже зарегистрирован — войдите."; authErr.hidden = false; }
           return;
         }
-        // здесь будет интеграция: POST /api/register
         const salt = makeSalt();
         users[key] = { name, phone, pass: await hashPass(salt, password), salt, created: Date.now() };
         saveUsers(users);
       } else if (isCode) {
-        // здесь будет интеграция: POST /api/sms/verify
         if (!users[key]) {
           users[key] = { name: "Покупатель", phone, pass: "", salt: "", created: Date.now() };
           saveUsers(users);
@@ -989,7 +1018,6 @@
           if (authErr) { authErr.textContent = "Аккаунт не найден — зарегистрируйтесь."; authErr.hidden = false; }
           return;
         }
-        // здесь будет интеграция: POST /api/login
         if (u.pass && (await hashPass(u.salt, password)) !== u.pass) {
           setFieldError(authForm.elements.password, "Неверный пароль");
           return;
@@ -1047,6 +1075,23 @@
   };
   const saveCustomCats = (list) => localStorage.setItem("tm-custom-cats", JSON.stringify(list));
   const getCatalog = () => CATALOG.concat(getCustomCats());
+  // Этап 4 hybrid: кэш API, fallback на data.js + overrides
+  let apiProductsCache = null;
+  try { const c = localStorage.getItem("tm-api-products"); if (c) apiProductsCache = JSON.parse(c); } catch { /* ignore */ }
+  const loadApiProducts = async () => {
+    if (!USE_API) return;
+    try {
+      const r = await fetch(`${API_BASE}/api/products`);
+      if (!r.ok) throw new Error("api");
+      const data = await r.json();
+      if (Array.isArray(data) && data.length) {
+        apiProductsCache = data.map((p) => ({ ...p, cat: getCatalog().find((c) => c.id === p.cat_id) || getCatalog()[0], cat_id: p.cat_id }));
+        localStorage.setItem("tm-api-products", JSON.stringify(apiProductsCache));
+        if (location.hash.startsWith("#/catalog") || location.hash.startsWith("#/category")) renderRoute();
+      }
+    } catch { /* fallback */ }
+  };
+  if (USE_API) loadApiProducts();
 
   // промокоды: {code, type: "pct"|"fix", value, active}
   const PROMOS_KEY = "tm-promos";
@@ -1103,6 +1148,7 @@
   });
 
   const getProducts = () => {
+    if (USE_API && Array.isArray(apiProductsCache) && apiProductsCache.length) return apiProductsCache;
     const ov = getOverrides();
     const base = ALL.map((p) => {
       const o = ov[p.id];
@@ -1955,11 +2001,16 @@ const productCard = (p) => {
     if (USE_API) {
       try {
         const res = await fetch(`${API_BASE}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error("api");
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          if (res.status === 400 && j.detail) { showToast(j.detail); return; }
+          throw new Error("api");
+        }
         const data = await res.json();
-        order = { ...payload, no: data.no || payload.no || 1043, status: data.status || "Собирается" };
-        // кэшируем и локально для fallback-видимости кабинета до Этапа 5
+        order = { ...payload, no: data.no ?? payload.no ?? 1043, subtotal: data.subtotal ?? payload.subtotal, fee: data.fee ?? payload.fee, total: data.total ?? payload.total, discount: data.discount ?? payload.discount, status: data.status || "Собирается" };
         try { const l = getOrdersRaw(); l.unshift(order); localStorage.setItem(ORDERS_KEY, JSON.stringify(l.slice(0, 10))); } catch { /* ignore */ }
+        // Этап 5: обновляем кэш товаров (сток списали на сервере)
+        try { await loadApiProducts(); } catch { /* ignore */ }
       } catch {
         order = doLocal();
       }
@@ -2012,7 +2063,7 @@ const productCard = (p) => {
   };
 
   // единый обработчик кликов для всех динамических страниц
-  document.addEventListener("click", (e) => {
+  document.addEventListener("click", async (e) => {
     const target = e.target.closest(
       "[data-add], [data-qty], [data-remove], [data-fav], [data-pass-eye], [data-star], [data-thumb], [data-share], [data-tg-login], [data-social], [data-checkout], [data-open-auth], [data-logout], [data-cat], [data-view], [data-admin-tab], [data-admin-logout], [data-lead-done], [data-lead-del], [data-del-product], [data-save-product], [data-export], [data-review-ok], [data-review-del], [data-del-order], [data-del-cat], [data-reset-demo], [data-img-product], [data-del-img], [data-reorder], [data-promo-toggle], [data-promo-del], [data-tg-test]"
     );
@@ -2151,6 +2202,13 @@ const productCard = (p) => {
       }
       renderRoute();
     } else if (target.hasAttribute("data-del-product")) {
+      if (USE_API && isAdmin()) {
+        try {
+          const tok = sessionStorage.getItem("tm-jwt") || "";
+          const r = await fetch(`${API_BASE}/api/products/${encodeURIComponent(target.dataset.delProduct)}`, { method: "DELETE", headers: tok ? { Authorization: `Bearer ${tok}` } : {} });
+          if (r.ok) { await loadApiProducts(); renderRoute(); showToast("Товар удалён на сервере"); return; }
+        } catch { /* fallback */ }
+      }
       saveCustomProducts(getCustomProducts().filter((p) => p.id !== target.dataset.delProduct));
       renderRoute();
     } else if (target.hasAttribute("data-save-product")) {
@@ -2158,6 +2216,13 @@ const productCard = (p) => {
       const row = target.closest("[data-row]");
       const price = Math.max(0, parseInt(row.querySelector('[data-f="price"]').value, 10) || 0);
       const stock = Math.max(0, parseInt(row.querySelector('[data-f="stock"]').value, 10) || 0);
+      if (USE_API && isAdmin()) {
+        try {
+          const tok = sessionStorage.getItem("tm-jwt") || "";
+          const r = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, { method: "PUT", headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) }, body: JSON.stringify({ price, stock }) });
+          if (r.ok) { await loadApiProducts(); showToast("Цена и остаток сохранены на сервере"); renderRoute(); return; }
+        } catch { /* fallback */ }
+      }
       const custom = getCustomProducts();
       const ci = custom.findIndex((p) => p.id === id);
       if (ci >= 0) {
@@ -2295,6 +2360,15 @@ const productCard = (p) => {
   let adminTab = "products";
 
   const isAdmin = () => {
+    // Этап 2: сначала JWT (is_admin), fallback — старый hash-сессия для оффлайна
+    try {
+      const tok = sessionStorage.getItem("tm-jwt");
+      if (tok) {
+        const b64 = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const payload = JSON.parse(atob(b64));
+        if (payload.is_admin && payload.exp * 1000 > Date.now()) return true;
+      }
+    } catch { /* ignore */ }
     try {
       const raw = sessionStorage.getItem("tm-admin");
       if (!raw) return false;
@@ -2345,24 +2419,20 @@ const productCard = (p) => {
     } catch { return { tgToken: "", tgChat: "" }; }
   };
   /**
-   * ⚠️ DEMO ONLY — INSECURE
-   * Токен уходит прямо из браузера: fetch("https://api.telegram.org/bot"+tgToken+"/sendMessage")
-   * Токен виден в DevTools → Network, доступен любому XSS. Не использовать в продакшене.
-   * Прод: клиент → POST /api/telegram/send {text} → сервер (токен в env) → Bot API.
-   * Fire-and-forget, молча терпим офлайн и пустые ключи.
+   * Этап 3: токен только в .env на сервере. Клиент шлёт POST /api/telegram/send {text}.
+   * Network: POST http://localhost:8000/api/telegram/send — токен не светится.
+   * Fallback: если USE_API=false или сервер не настроен — молча игнор (демо).
    */
   const sendTelegramInsecureDemo = (text) => {
+    if (!USE_API) return;
     try {
-      const { tgToken, tgChat } = getSettings();
-      if (!tgToken || !tgChat) return;
-      fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      fetch(`${API_BASE}/api/telegram/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: tgChat, text, parse_mode: "HTML", disable_web_page_preview: true }),
+        body: JSON.stringify({ text }),
       }).catch(() => {});
     } catch { /* ignore */ }
   };
-  // alias для обратной совместимости (если где-то остался старый вызов)
   const sendTelegram = sendTelegramInsecureDemo;
 
   const viewAdminLogin = () => `
@@ -2571,20 +2641,20 @@ const productCard = (p) => {
     const s = getSettings();
     return `
       <form class="admin-card" id="adminSettingsForm" style="max-width:560px">
-        <div role="note" style="background:#fff3cd;border:1px solid #f0c36d;border-left:4px solid #c8102e;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.45;color:#5a3e00;margin-bottom:16px">⚠️ <b>Telegram-токен хранится в браузере. Это небезопасно.</b> Токен виден в DevTools → Application → Local Storage и в Network (URL <code>api.telegram.org/bot&lt;token&gt;/sendMessage</code>). При любом XSS токен утечёт и позволит слать сообщения от вашего бота. В продакшене нужен серверный прокси: клиент → <code>POST /api/telegram/send {text}</code> → сервер (токен в <code>.env</code> на сервере) → Bot API.</div>
+        <div role="note" style="background:#d4edda;border:1px solid #a3d9b1;border-left:4px solid #1c7c3c;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.45;color:#155724;margin-bottom:16px">✅ <b>Этап 3: токен теперь на сервере.</b> Клиент шлёт <code>POST ${API_BASE}/api/telegram/send {text}</code>, токен берётся из <code>backend/.env</code> (<code>TELEGRAM_BOT_TOKEN/CHAT_ID</code>) и не светится в браузере. Поля ниже — deprecated (оставлены для оффлайн-fallback).</div>
         <b class="admin-form-title">Уведомления в Telegram</b>
-        <p class="cart-note" style="margin-bottom:14px">Заявки и заказы будут падать в чат. Бот: @BotFather → токен; ID чата: @userinfobot.</p>
+        <p class="cart-note" style="margin-bottom:14px">Заявки и заказы будут падать в чат. Бот: @BotFather → токен; ID чата: @userinfobot. Настройте <code>backend/.env</code> и перезапустите API.</p>
         <label>
-          <span>Токен бота</span>
+          <span>Токен бота (deprecated)</span>
           <input name="tgToken" type="password" value="${esc(s.tgToken)}" placeholder="123456:ABC-DEF..." autocomplete="off">
         </label>
         <label>
-          <span>ID чата</span>
+          <span>ID чата (deprecated)</span>
           <input name="tgChat" value="${esc(s.tgChat)}" placeholder="123456789" inputmode="numeric">
         </label>
         <button class="btn btn--primary" type="submit">Сохранить</button>
-        <button class="btn btn--ghost" type="button" data-tg-test style="margin-left:8px">Отправить тест</button>
-        <p class="cart-note" style="margin-top:10px;font-size:12px;color:var(--muted)">Токен остаётся в <code>localStorage:tm-settings</code> до ручной очистки. Кнопка «Отправить тест» шлёт запрос напрямую из браузера — токен светится в Network.</p>
+        <button class="btn btn--ghost" type="button" data-tg-test style="margin-left:8px">Отправить тест (через сервер)</button>
+        <p class="cart-note" style="margin-top:10px;font-size:12px;color:var(--muted)">Кнопка «Отправить тест» теперь шлёт <code>POST /api/telegram/send</code> — токен в Network не виден.</p>
       </form>`;
   };
 
@@ -2718,7 +2788,18 @@ const productCard = (p) => {
       e.preventDefault();
       const input = e.target.elements.password;
       const raw = String(input.value || "");
-      // демо: хешируем ввод и сравниваем с ADMIN_PASSWORD_HASH
+      // Этап 2 hybrid: пробуем API login admin, fallback — hash
+      if (USE_API) {
+        try {
+          const r = await fetch(`${API_BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: "admin", password: raw }) });
+          if (r.ok) {
+            const j = await r.json(); sessionStorage.setItem("tm-jwt", j.access_token); renderRoute(); return;
+          }
+          if (r.status === 401) { /* не тот пароль — пробуем hash fallback ниже */ }
+          else if (r.status >= 500) { /* сеть — fallback */ }
+          else { const j = await r.json().catch(() => ({})); input.value = ""; const err = document.getElementById("adminErr"); if (err) { err.textContent = j.detail || "Неверный пароль"; err.hidden = false; } return; }
+        } catch { /* network — fallback к hash */ }
+      }
       let ok = false;
       try {
         const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
@@ -2739,17 +2820,24 @@ const productCard = (p) => {
     if (e.target.id === "adminProductForm") {
       e.preventDefault();
       const f = e.target;
-      const custom = getCustomProducts();
-      custom.push({
+      const payload = {
         id: "c" + Date.now(),
         name: f.elements.name.value.trim(),
         sku: f.elements.sku.value.trim().toUpperCase(),
         price: parseInt(f.elements.price.value, 10) || 0,
         stock: parseInt(f.elements.stock.value, 10) || 0,
         img: f.elements.img.value.trim(),
-        catId: f.elements.catId.value,
-        custom: true,
-      });
+        cat_id: f.elements.catId.value,
+      };
+      if (USE_API && isAdmin()) {
+        try {
+          const tok = sessionStorage.getItem("tm-jwt") || "";
+          const r = await fetch(`${API_BASE}/api/products`, { method: "POST", headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) }, body: JSON.stringify(payload) });
+          if (r.ok) { await loadApiProducts(); f.reset(); renderRoute(); showToast("Товар создан на сервере"); return; }
+        } catch { /* fallback */ }
+      }
+      const custom = getCustomProducts();
+      custom.push({ ...payload, catId: payload.cat_id, custom: true });
       saveCustomProducts(custom);
       f.reset();
       renderRoute();
