@@ -286,6 +286,18 @@
   /* ---------- Корзина ---------- */
   const cartCount = document.getElementById("cartCount");
   const cartBtn = document.getElementById("cartBtn");
+  const USE_API = true;
+  const API_BASE = "http://localhost:8000";
+  // Этап 1: админ-чтение пытается взять данные с API, при 401/ошибке — fallback localStorage (JWT появится в Этапе 2)
+  const apiGet = async (path) => {
+    try {
+      const token = (() => { try { return JSON.parse(sessionStorage.getItem("tm-admin"))?.token || sessionStorage.getItem("tm-jwt") || ""; } catch { return sessionStorage.getItem("tm-jwt") || ""; } })();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`${API_BASE}${path}`, { headers });
+      if (!res.ok) throw new Error("api");
+      return await res.json();
+    } catch { return null; }
+  };
   const RL_WINDOW = 15 * 60 * 1000, RL_MAX = 5;
   const hitRateLimit = (key) => {
     try {
@@ -512,17 +524,32 @@
 
     if (!valid) return;
 
-    // заявка сохраняется в админпанель (#/admin) и дублируется в Telegram
-    const leads = getLeadsRaw();
-    leads.unshift({
-      id: Date.now(),
+    // hybrid: пробуем API, при ошибке — localStorage
+    const leadPayload = {
       name: name.value.trim(),
       contact: phone.value.trim(),
       channel: form.elements.contact.value || "Не указано",
-      date: new Date().toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
-      done: false,
-    });
-    saveLeads(leads);
+    };
+    const saveLocal = () => {
+      const leads = getLeadsRaw();
+      leads.unshift({
+        id: Date.now(),
+        name: leadPayload.name,
+        contact: leadPayload.contact,
+        channel: leadPayload.channel,
+        date: new Date().toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+        done: false,
+      });
+      saveLeads(leads);
+    };
+    if (USE_API) {
+      fetch(`${API_BASE}/api/leads`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(leadPayload) })
+        .then((r) => { if (!r.ok) throw new Error("api"); return r.json(); })
+        .then(() => { /* ok — админка подтянет с API, локально не дублируем */ })
+        .catch(() => saveLocal());
+    } else {
+      saveLocal();
+    }
     const lastLead = leads[0];
     const clean = (s) => String(s == null ? "" : s).replace(/[<>&]/g, "");
     sendTelegramInsecureDemo(`Новая заявка\nИмя: ${clean(lastLead.name)}\nКонтакт: ${clean(lastLead.contact)}\nКанал: ${clean(lastLead.channel)}`);
@@ -1860,6 +1887,11 @@ const productCard = (p) => {
       }
     } else if (view === "admin") {
       pageMain.innerHTML = isAdmin() ? viewAdmin() : viewAdminLogin();
+      if (isAdmin() && USE_API) {
+        // Этап 1: фоновая попытка взять данные с API (401 → fallback localStorage, пока нет JWT)
+        apiGet("/api/leads").then((d) => { if (d) console.info("[api] leads from server", d.length); });
+        apiGet("/api/orders").then((d) => { if (d) console.info("[api] orders from server", d.length); });
+      }
     } else {
       pageMain.innerHTML = viewNotFound();
     }
@@ -1874,9 +1906,8 @@ const productCard = (p) => {
     if (window.__modelsRefresh) window.__modelsRefresh();
   };
 
-  // здесь будет интеграция с CRM/оплатой: сейчас заказ сохраняется локально
-  // TODO(prod): пересчёт и списание стока — только на сервере (POST /api/orders)
-  const placeOrder = (form) => {
+  // hybrid: сначала API, при ошибке — localStorage (старый код не удаляем)
+  const placeOrder = async (form) => {
     let entries = Object.entries(cartStore.read());
     if (!entries.length) return;
     const name = form.elements.name.value.trim();
@@ -1887,7 +1918,6 @@ const productCard = (p) => {
     form.elements.name.classList.toggle("is-error", name.length < 2);
     form.elements.phone.classList.toggle("is-error", phone.replace(/\D/g, "").length < 11);
     if (!ok) return;
-    // харденинг: кап по стоку на момент заказа + отсев несуществующих
     entries = entries.map(([id, qty]) => {
       const p = findProduct(id);
       if (!p) return null;
@@ -1909,15 +1939,33 @@ const productCard = (p) => {
       const p = findProduct(id);
       return p ? { id, name: p.name, price: linePrice(p, qty), qty } : null;
     }).filter(Boolean);
-    const orders = getOrdersRaw();
-    const order = {
-      no: orders.reduce((m, o) => Math.max(m, o.no || 0), 1042) + 1, items, total: subtotal - discount + fee, subtotal, fee, discount, promo: promoCode, lines,
+    const payload = {
       name, phone, delivery, pay: form.elements.pay.value,
       address: form.elements.address.value.trim(), comment: form.elements.comment.value.trim(),
-      status: "Собирается",
+      items, subtotal, fee, total: subtotal - discount + fee, discount, promo: promoCode, lines,
     };
-    orders.unshift(order);
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(orders.slice(0, 10)));
+    const doLocal = () => {
+      const orders = getOrdersRaw();
+      const order = { no: orders.reduce((m, o) => Math.max(m, o.no || 0), 1042) + 1, ...payload, status: "Собирается" };
+      orders.unshift(order);
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders.slice(0, 10)));
+      return order;
+    };
+    let order = null;
+    if (USE_API) {
+      try {
+        const res = await fetch(`${API_BASE}/api/orders`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error("api");
+        const data = await res.json();
+        order = { ...payload, no: data.no || payload.no || 1043, status: data.status || "Собирается" };
+        // кэшируем и локально для fallback-видимости кабинета до Этапа 5
+        try { const l = getOrdersRaw(); l.unshift(order); localStorage.setItem(ORDERS_KEY, JSON.stringify(l.slice(0, 10))); } catch { /* ignore */ }
+      } catch {
+        order = doLocal();
+      }
+    } else {
+      order = doLocal();
+    }
     const clean = (s) => String(s == null ? "" : s).replace(/[<>&]/g, "");
     sendTelegramInsecureDemo(`Новый заказ № ${order.no} на ${money(order.total)}\n${clean(order.name)}, ${clean(order.phone)}\n${DELIVERY_NAMES[order.delivery] || ""}${order.address ? " · " + clean(order.address) : ""}${promoCode ? `\nПромокод ${promoCode}: −${money(discount)}` : ""}\n${(order.lines || []).map((l) => `${clean(l.name)} × ${l.qty}`).join("\n")}`);
     cartStore.clear();
