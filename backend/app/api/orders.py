@@ -17,13 +17,16 @@ CRIMEA_FEE = 350
 BULK_MIN = 10
 BULK_OFF = 0.25
 
+
 def delivery_fee(method: str, subtotal: int) -> int:
     if method == "pickup" or subtotal >= FREE_FROM:
         return 0
     return CRIMEA_FEE if method == "crimea" else COURIER_FEE
 
+
 def line_price(price: int, qty: int) -> int:
     return max(1, round(price * (1 - BULK_OFF))) if qty >= BULK_MIN else price
+
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
@@ -89,6 +92,7 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
         "status": order.status,
         "lines": json.loads(order.lines_json),
     }
+
 
 @router.get("", dependencies=[Depends(require_admin)])
 def list_orders(db: Session = Depends(get_db)):

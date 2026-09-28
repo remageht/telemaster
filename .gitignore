@@ -33,3 +33,6 @@ data/
 check_lr3.py
 gen_lr3.py
 
+# local prompts - not for GitHub
+PROMPT.md
+

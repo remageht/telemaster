@@ -10,6 +10,7 @@ import logging
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 logger = logging.getLogger("uvicorn.error")
 
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_lead(payload: LeadCreate, db: Session = Depends(get_db)):
     lead = Lead(
@@ -32,17 +33,18 @@ def create_lead(payload: LeadCreate, db: Session = Depends(get_db)):
         "done": lead.done,
     }
 
+
 @router.get("", dependencies=[Depends(require_admin)])
 def list_leads(db: Session = Depends(get_db)):
     leads = db.query(Lead).order_by(Lead.id.desc()).limit(100).all()
     return [
         {
-            "id": l.id,
-            "name": l.name,
-            "contact": l.contact,
-            "channel": l.channel,
-            "date": l.date,
-            "done": l.done,
+            "id": lead.id,
+            "name": lead.name,
+            "contact": lead.contact,
+            "channel": lead.channel,
+            "date": lead.date,
+            "done": lead.done,
         }
-        for l in leads
+        for lead in leads
     ]

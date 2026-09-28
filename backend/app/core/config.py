@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator, ValidationInfo
+from pydantic import field_validator
 from functools import lru_cache
-import os
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "ТЕЛЕМАСТЕР API"
@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
 
 @lru_cache
 def get_settings() -> Settings:

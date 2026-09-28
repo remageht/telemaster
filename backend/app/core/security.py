@@ -13,11 +13,14 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 bearer = HTTPBearer(auto_error=False)
 settings = get_settings()
 
+
 def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
@@ -25,11 +28,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
+
 def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + (expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS))
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
 
 def decode_token(token: str) -> dict:
     try:
@@ -41,6 +46,7 @@ def decode_token(token: str) -> dict:
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
 
 def get_current_user(
     creds: HTTPAuthorizationCredentials = Depends(bearer),
@@ -83,6 +89,7 @@ def get_current_user(
         "payload": payload,
     }
 
+
 def require_admin(user=Depends(get_current_user)):
     if not user.get("is_admin") and not user.get("payload", {}).get("is_admin"):
         raise HTTPException(
@@ -90,6 +97,7 @@ def require_admin(user=Depends(get_current_user)):
             detail="Admin privileges required",
         )
     return user
+
 
 def mask_phone(phone: str) -> str:
     """Mask phone for logs and responses to protect PII."""

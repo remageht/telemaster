@@ -1,11 +1,13 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
+
 class OrderLine(BaseModel):
     id: str = Field(..., min_length=1, max_length=64)
     name: str = Field(..., min_length=1, max_length=128)
     price: int = Field(..., ge=0)
     qty: int = Field(..., gt=0, le=1000)
+
 
 class OrderCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
@@ -20,6 +22,7 @@ class OrderCreate(BaseModel):
     total: Optional[int] = Field(0, ge=0)
     discount: Optional[int] = Field(0, ge=0)
     lines: Optional[List[OrderLine]] = Field(None)
+
 
 class OrderOut(BaseModel):
     id: int

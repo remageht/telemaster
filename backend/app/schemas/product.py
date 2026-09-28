@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 
+
 class ProductBase(BaseModel):
     id: str = Field(..., min_length=1, max_length=64)
     name: str = Field(..., min_length=2, max_length=128)
@@ -12,8 +13,10 @@ class ProductBase(BaseModel):
     img: Optional[str] = Field(None, max_length=512)
     cat_id: str = Field(..., min_length=1, max_length=64)
 
+
 class ProductCreate(ProductBase):
     pass
+
 
 class ProductOut(ProductBase):
     class Config:

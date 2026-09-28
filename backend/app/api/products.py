@@ -7,9 +7,11 @@ from app.schemas.product import ProductCreate, ProductOut
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
+
 @router.get("", response_model=list[ProductOut])
 def list_products(db: Session = Depends(get_db)):
     return db.query(Product).all()
+
 
 @router.post("", response_model=ProductOut, dependencies=[Depends(require_admin)])
 def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
@@ -20,6 +22,7 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(p)
     return p
+
 
 @router.put("/{product_id}", response_model=ProductOut, dependencies=[Depends(require_admin)])
 def update_product(product_id: str, payload: dict, db: Session = Depends(get_db)):
@@ -32,6 +35,7 @@ def update_product(product_id: str, payload: dict, db: Session = Depends(get_db)
     db.commit()
     db.refresh(p)
     return p
+
 
 @router.delete("/{product_id}", dependencies=[Depends(require_admin)])
 def delete_product(product_id: str, db: Session = Depends(get_db)):

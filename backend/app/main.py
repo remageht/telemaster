@@ -17,6 +17,7 @@ logger = logging.getLogger("uvicorn.error")
 
 limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT_DEFAULT])
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -43,6 +44,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.exception_handler(Exception)
 async def generic_500_handler(request: Request, exc: Exception):
     if isinstance(exc, HTTPException):
@@ -56,6 +58,7 @@ async def generic_500_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error"},
     )
+
 
 @app.get("/healthz")
 def healthz():
@@ -75,9 +78,11 @@ def healthz():
         "version": "1.0.0",
     }
 
+
 @app.get("/health")
 def health():
     return {"status": "ok", "stage": 0, "version": "1.0.0"}
+
 
 app.include_router(auth.router)
 app.include_router(orders.router)

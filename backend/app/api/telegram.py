@@ -6,8 +6,10 @@ from app.core.config import get_settings
 router = APIRouter(prefix="/api/telegram", tags=["telegram"])
 settings = get_settings()
 
+
 class TelegramSend(BaseModel):
     text: str
+
 
 @router.post("/send")
 async def send_telegram(payload: TelegramSend):

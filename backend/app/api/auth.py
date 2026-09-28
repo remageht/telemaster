@@ -13,6 +13,7 @@ from app.models.user import User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register(data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.phone == data.phone).first():
@@ -28,6 +29,7 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
 
 @router.post("/login", response_model=Token)
 def login(data: UserLogin, db: Session = Depends(get_db)):
@@ -45,6 +47,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
 
 @router.post("/refresh", response_model=Token)
 def refresh_token_endpoint(data: RefreshTokenRequest, db: Session = Depends(get_db)):
