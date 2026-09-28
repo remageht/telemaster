@@ -287,7 +287,7 @@
   const cartCount = document.getElementById("cartCount");
   const cartBtn = document.getElementById("cartBtn");
   const USE_API = true;
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = (window.__CONFIG__ && window.__CONFIG__.API_BASE) || window.API_BASE || "http://localhost:8000";
   // Этап 1: админ-чтение пытается взять данные с API, при 401/ошибке — fallback localStorage (JWT появится в Этапе 2)
   const apiGet = async (path) => {
     try {

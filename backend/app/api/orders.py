@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import require_admin
+from app.core.security import require_admin, mask_phone
 from app.models.order import Order
 from app.models.product import Product
 from app.schemas.order import OrderCreate
 import json
+import logging
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
+logger = logging.getLogger("uvicorn.error")
 
 FREE_FROM = 3000
 COURIER_FEE = 490
@@ -23,11 +25,10 @@ def delivery_fee(method: str, subtotal: int) -> int:
 def line_price(price: int, qty: int) -> int:
     return max(1, round(price * (1 - BULK_OFF))) if qty >= BULK_MIN else price
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
     raw = payload.model_dump()
     lines_in = raw.get("lines") or []
-    # Этап 5: серверный пересчёт и проверка стока
     subtotal = 0
     for ln in lines_in:
         pid = ln.get("id")
@@ -41,12 +42,10 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
             price = line_price(prod.price, qty)
             subtotal += price * qty
         else:
-            # продукта нет в БД (ещё не синхронизирован) — доверяем цене из payload
             price = int(ln.get("price", 0))
             subtotal += price * qty
 
     fee = delivery_fee(raw.get("delivery", "pickup"), subtotal)
-    # скидку пока не считаем серверно (промокоды — отдельно), берём из payload если есть
     discount = int(raw.get("discount", 0) or 0)
     total = subtotal - discount + fee
 
@@ -79,14 +78,38 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
     db.add(order)
     db.commit()
     db.refresh(order)
-    return {"id": order.id, "no": order.no, "subtotal": subtotal, "fee": fee, "total": total, "discount": discount, "status": order.status, "lines": json.loads(order.lines_json)}
+    logger.info(f"Order #{next_no} created: total={total} RUB, phone={mask_phone(order.phone)}")
+    return {
+        "id": order.id,
+        "no": order.no,
+        "subtotal": subtotal,
+        "fee": fee,
+        "total": total,
+        "discount": discount,
+        "status": order.status,
+        "lines": json.loads(order.lines_json),
+    }
 
 @router.get("", dependencies=[Depends(require_admin)])
 def list_orders(db: Session = Depends(get_db)):
     orders = db.query(Order).order_by(Order.id.desc()).limit(100).all()
     return [
-        {"id": o.id, "no": o.no, "items": o.items, "total": o.total, "subtotal": o.subtotal, "fee": o.fee,
-         "name": o.name, "phone": o.phone, "delivery": o.delivery, "pay": o.pay, "address": o.address,
-         "comment": o.comment, "status": o.status, "lines": o.lines, "created_at": o.created_at.isoformat() if o.created_at else None}
+        {
+            "id": o.id,
+            "no": o.no,
+            "items": o.items,
+            "total": o.total,
+            "subtotal": o.subtotal,
+            "fee": o.fee,
+            "name": o.name,
+            "phone": o.phone,
+            "delivery": o.delivery,
+            "pay": o.pay,
+            "address": o.address,
+            "comment": o.comment,
+            "status": o.status,
+            "lines": o.lines,
+            "created_at": o.created_at.isoformat() if o.created_at else None,
+        }
         for o in orders
     ]

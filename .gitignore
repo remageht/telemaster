@@ -25,8 +25,11 @@ node_modules/
 backend/__pycache__/
 backend/app/__pycache__/
 backend/*/ __pycache__/
-backend/telemaster.db
-backend/.venv/
 **/__pycache__/
 *.pyc
+*.db
+backend/telemaster.db
+data/
+check_lr3.py
+gen_lr3.py
 

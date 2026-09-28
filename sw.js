@@ -10,6 +10,7 @@ const ASSETS = [
   "./js/constellation.js?v=39",
   "./js/pcb-field.js?v=1",
   "./js/data.js?v=2",
+  "./js/config.js",
   "./js/circuit-bg.js?v=6",
   "./img/icon-192.png",
   "./img/icon-512.png",

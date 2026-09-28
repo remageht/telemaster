@@ -1,0 +1,64 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint-and-test:
+    name: Backend Lint and Security Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install flake8
+
+      - name: Lint Code
+        run: |
+          flake8 backend/app --max-line-length=120 --ignore=E501,W503,E402,E722
+
+      - name: Run Production Security and Integration Tests
+        run: |
+          python backend/tests/test_prod.py
+
+  docker-build:
+    name: Docker Images Build Check
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: actions/setup-buildx-action@v3
+
+      - name: Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: false
+          tags: telemaster-api:ci-test
+
+      - name: Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: false
+          tags: telemaster-frontend:ci-test

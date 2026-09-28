@@ -1,20 +1,31 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator, ValidationInfo
 from functools import lru_cache
+import os
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "ТЕЛЕМАСТЕР API"
-    # SQLite по умолчанию для Этапа 0; для продакшена задай DATABASE_URL=postgresql://user:pass@host/db
+    ENVIRONMENT: str = "production"
     DATABASE_URL: str = "sqlite:///./telemaster.db"
     SECRET_KEY: str = "change-me-in-env-demo-only-32-chars"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24h для демо
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15  # 15m для access-токена
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7     # 7 дней для refresh-токена
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
-    CORS_ORIGINS: str = "http://localhost:8080,http://127.0.0.1:8080,http://localhost:8000"
+    CORS_ORIGINS: str = "http://localhost:8080,http://127.0.0.1:8080,http://localhost:8000,http://localhost"
+    RATE_LIMIT_DEFAULT: str = "20/minute"
 
     class Config:
         env_file = ".env"
         extra = "ignore"
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if len(v.strip()) < 16:
+            raise ValueError("SECRET_KEY must be at least 16 characters")
+        return v.strip()
 
     @property
     def cors_origins_list(self) -> list[str]:
