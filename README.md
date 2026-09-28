@@ -14,6 +14,19 @@
 - Отзывы с модерацией, CSV-выгрузка, Telegram-уведомления (токен — `DEMO`, прокси нужен в проде)
 - PWA (`sw.js` + `manifest.json`), две темы (light / Dala)
 
+## Версии проекта
+
+| Версия | Дата | Ключевая фича | Ссылка на Release |
+|---|---|---|---|
+| [v0.60](https://github.com/remageht/telemaster/releases/tag/v0.60) | 23.09.2026 | Адаптивная верстка (480 px) и CSP | [Release v0.60](https://github.com/remageht/telemaster/releases/tag/v0.60) |
+| [v0.65](https://github.com/remageht/telemaster/releases/tag/v0.65) | 23.09.2026 | XSS‑защита (esc, escAttr, sanitizeImgSrc) | [Release v0.65](https://github.com/remageht/telemaster/releases/tag/v0.65) |
+| [v0.66](https://github.com/remageht/telemaster/releases/tag/v0.66) | 24.09.2026 | Hybrid orders & leads (API → localStorage) | [Release v0.66](https://github.com/remageht/telemaster/releases/tag/v0.66) |
+| [v0.67](https://github.com/remageht/telemaster/releases/tag/v0.67) | 24.09.2026 | JWT‑админка (is_admin, TTL) | [Release v0.67](https://github.com/remageht/telemaster/releases/tag/v0.67) |
+| [v0.68](https://github.com/remageht/telemaster/releases/tag/v0.68) | 24.09.2026 | Products CRUD + getProducts кэш | [Release v0.68](https://github.com/remageht/telemaster/releases/tag/v0.68) |
+| [v0.69](https://github.com/remageht/telemaster/releases/tag/v0.69) | 24.09.2026 | Серверный subtotal/fee/total + проверка stock | [Release v0.69](https://github.com/remageht/telemaster/releases/tag/v0.69) |
+| [v0.70](https://github.com/remageht/telemaster/releases/tag/v0.70) | 24.09.2026 | Stage 6 cleanup (удалил hash‑fallback, telegram‑proxy) | [Release v0.70](https://github.com/remageht/telemaster/releases/tag/v0.70) |
+| [v1.0.0](https://github.com/remageht/telemaster/releases/tag/v1.0.0) | 24.09.2026 | Hybrid prod + Dockerfile | [Release v1.0.0](https://github.com/remageht/telemaster/releases/tag/v1.0.0) |
+
 ## Быстрый старт
 
 ```bash
