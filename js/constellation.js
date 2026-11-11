@@ -165,9 +165,9 @@
       .concat(fil.map((p) => ({ x: p.x, y: p.y, z: p.z || 0, fil: true, hi: false, base: false })))
       .concat(hi.map((p) => ({ x: p.x, y: p.y, z: p.z || 0, fil: false, hi: true, base: false })))
       .concat(bas.map((p) => ({ x: p[0], y: p[1], z: p[2] || 0, fil: false, hi: false, base: true })));
-    // сдвиг центра (доля canvas): гигантская лампа живёт сбоку hero
-    const DX = o.bx != null ? (o.bx - 0.5) * W : 0, DY = o.by != null ? (o.by - 0.5) * H : 0;
-    if (DX || DY) all.forEach((p) => { p.x += DX; p.y += DY; });
+    // якоря лампы центрированы в (0,0,0) локального 3D-пространства;
+    // экранное смещение (o.bx, o.by) применяется при 2D-проекции в update,
+    // что исключает сингулярность Z <= -FOCUS при поворотах
     for (let i = all.length - 1; i > 0; i--) {
       const j = (Math.random() * (i + 1)) | 0;
       const t = all[i];
@@ -175,6 +175,8 @@
       all[j] = t;
     }
     const FIL_COLORS = ["#fff8e6", "#ffd166", "#ffb829"];
+    const bcx = o.bx != null ? (o.bx <= 1 ? o.bx * W : o.bx) : W / 2;
+    const bcy = o.by != null ? (o.by <= 1 ? o.by * H : o.by) : H / 2;
     parts.forEach((p, i) => {
       if (i < all.length && (o.shape === "bulb" || Math.random() < 0.94)) {
         p.ax = all[i].x;
@@ -203,8 +205,8 @@
       p.dal = 1;
       p.svx = 0;
       p.svy = 0;
-      p.x = Math.random() * W;
-      p.y = Math.random() * H;
+      p.x = bcx + rand(-R, R);
+      p.y = bcy + rand(-R, R);
     });
 
     // линии-связи «созвездия»: соединяем соседние якоря каркаса лампы,
@@ -218,12 +220,15 @@
       for (let a = 0; a < anchored.length; a++) {
         for (let b = a + 1; b < anchored.length; b++) {
           const A = anchored[a].p, B = anchored[b].p;
+          // связываем только логически однородные части (нить к нити, цоколь к цоколю, стекло к стеклу)
+          if (A.fil !== B.fil) continue;
+          if (A.base !== B.base) continue;
           const d = Math.hypot(A.ax - B.ax, A.ay - B.ay, A.az - B.az);
           if (d > maxD) continue;
           if ((deg.get(A) || 0) >= maxDeg || (deg.get(B) || 0) >= maxDeg) continue;
           deg.set(A, (deg.get(A) || 0) + 1);
           deg.set(B, (deg.get(B) || 0) + 1);
-          bulbLinks.push([anchored[a].i, anchored[b].i, A.fil || B.fil, A.base || B.base]);
+          bulbLinks.push([anchored[a].i, anchored[b].i, A.fil && B.fil, A.base && B.base]);
         }
       }
     }
@@ -599,6 +604,8 @@
         for (const [i, j, isFil, isBase] of bulbLinks) {
           const A = parts[i], B = parts[j];
           if (!A || !B || A.ax == null || B.ax == null) continue;
+          const dx = A.x - B.x, dy = A.y - B.y;
+          if (dx * dx + dy * dy > 14400) continue; // защита: не соединять частицы дальше 120px на экране
           const glow = o.lit !== false;
           ctx.globalAlpha = (isFil ? 0.5 : isBase ? 0.34 : 0.26) * o.alpha * (glow ? 1 : 0.55);
           ctx.strokeStyle = isFil ? "#ffd166" : isBase ? "#9fb4c8" : "#7fd3ff";
@@ -665,9 +672,12 @@
         const z1 = -p.ax * sa + p.az * ca;
         const y1 = p.ay * CT - z1 * ST;
         const z2 = p.ay * ST + z1 * CT;
-        const sc = FOCUS / (FOCUS + z2);
-        let tx = W / 2 + x1 * sc, ty = H / 2 + y1 * sc;
-        p.s = (p.s0 || p.s) * sc;
+        const denom = Math.max(40, FOCUS + z2);
+        const sc = FOCUS / denom;
+        const cx = o.bx != null ? (o.bx <= 1 ? o.bx * W : o.bx) : W / 2;
+        const cy = o.by != null ? (o.by <= 1 ? o.by * H : o.by) : H / 2;
+        let tx = cx + x1 * sc, ty = cy + y1 * sc;
+        p.s = Math.max(0.5, (p.s0 || p.s) * sc);
         p.dal = Math.min(1, Math.max(0.3, (sc - 0.7) * 1.7));
         if (three && p.screen) {
           // экран ТВ: есть сигнал — цветные полосы по якорям,
