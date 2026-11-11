@@ -34,6 +34,7 @@
 | [v0.70](https://github.com/remageht/telemaster/releases/tag/v0.70) | 24.09.2026 | Stage 6 cleanup (удалил hash‑fallback, telegram‑proxy) | [Release v0.70](https://github.com/remageht/telemaster/releases/tag/v0.70) |
 | [v1.0.0](https://github.com/remageht/telemaster/releases/tag/v1.0.0) | 24.09.2026 | Hybrid prod + Dockerfile | [Release v1.0.0](https://github.com/remageht/telemaster/releases/tag/v1.0.0) |
 | [v1.1.0](https://github.com/remageht/telemaster/releases/tag/v1.1.0) | 28.09.2026 | Prod hardening: JWT refresh, slowapi, compose+nginx, CI, v71 tm-v92 | [Release v1.1.0](https://github.com/remageht/telemaster/releases/tag/v1.1.0) |
+| [v1.2.0](https://github.com/remageht/telemaster/releases/tag/v1.2.0) | 11.11.2026 | Hardening: atomic orders, telegram relay fix, Hallmark a11y & CI fix, v72 tm-v93 | [Release v1.2.0](https://github.com/remageht/telemaster/releases/tag/v1.2.0) |
 
 ## Запуск в продакшене (Docker Compose)
 
