@@ -64,6 +64,92 @@ def test_production_security_suite():
         assert admin_orders.status_code == 200
         print("[OK] Admin login & GET /api/orders with admin token -> 200 OK")
 
+        # 6.1 Server-side pricing: client totals/line prices are ignored
+        import time
+        test_pid = f"test-sec-{int(time.time())}"
+        create_prod = client.post(
+            "/api/products",
+            json={"id": test_pid, "name": "Security Test Product", "sku": "SEC-TEST", "price": 1000, "stock": 5, "cat_id": "mcu"},
+            headers=admin_header,
+        )
+        assert create_prod.status_code == 200, create_prod.text
+        prod = create_prod.json()
+        assert prod["stock"] == 5, prod
+        order_payload = {
+            "name": "Security Test",
+            "phone": "+79780000000",
+            "delivery": "pickup",
+            "pay": "card",
+            "items": 1,
+            "subtotal": 1,
+            "fee": 0,
+            "total": 1,
+            "discount": 99999,
+            "promo": "TELE10",
+            "lines": [{"id": prod["id"], "name": prod["name"], "price": 1, "qty": 1}],
+        }
+        order_res = client.post("/api/orders", json=order_payload)
+        assert order_res.status_code == 201, order_res.text
+        order = order_res.json()
+        expected_discount = round(prod["price"] * 10 / 100)
+        assert order["subtotal"] == prod["price"], order
+        assert order["discount"] == expected_discount, order
+        assert order["total"] == prod["price"] - expected_discount, order
+        print("[OK] Client price/total/discount ignored -> server pricing applied")
+
+        stock_after = next(p for p in client.get("/api/products").json() if p["id"] == test_pid)
+        assert stock_after["stock"] == prod["stock"] - 1, stock_after
+        print("[OK] Stock atomically decremented after order")
+
+        bad_order = dict(order_payload)
+        bad_order["lines"] = [{"id": "no-such-product", "name": "x", "price": 1, "qty": 1}]
+        bad_res = client.post("/api/orders", json=bad_order)
+        assert bad_res.status_code == 400, bad_res.text
+        print("[OK] Unknown product in order -> 400")
+
+        order_status = client.patch(f"/api/orders/{order['id']}", json={"status": "Отправлен"}, headers=admin_header)
+        assert order_status.status_code == 200 and order_status.json()["status"] == "Отправлен"
+        print("[OK] PATCH /api/orders/{id} status -> 200")
+
+        # 6.2 Telegram relay requires admin, client text is escaped
+        tg_anon = client.post("/api/telegram/send", json={"text": "spam"})
+        assert tg_anon.status_code == 401, tg_anon.text
+        print("[OK] POST /api/telegram/send without token -> 401")
+
+        # 6.3 Products PUT ignores unknown/mass-assignment fields
+        put_res = client.put(
+            f"/api/products/{prod['id']}",
+            json={"stock": prod["stock"], "hacker": True},
+            headers=admin_header,
+        )
+        assert put_res.status_code == 200
+        assert "hacker" not in put_res.json()
+        print("[OK] PUT /api/products ignores mass-assignment fields")
+        assert client.delete(f"/api/products/{prod['id']}", headers=admin_header).status_code == 200
+
+        # 6.4 Leads: create -> done -> delete
+        lead_res = client.post("/api/leads", json={"name": "Lead Test", "contact": "+79781112233", "channel": "site"})
+        assert lead_res.status_code == 201, lead_res.text
+        lead = lead_res.json()
+        lead_patch = client.patch(f"/api/leads/{lead['id']}", json={"done": True}, headers=admin_header)
+        assert lead_patch.status_code == 200 and lead_patch.json()["done"] is True
+        lead_del = client.delete(f"/api/leads/{lead['id']}", headers=admin_header)
+        assert lead_del.status_code == 200
+        print("[OK] Leads create -> PATCH done -> DELETE")
+
+        # 6.5 Token of a deleted user is rejected (no ghost sessions)
+        from app.core.database import SessionLocal
+        from app.models.user import User
+        db = SessionLocal()
+        ghost = db.query(User).filter(User.phone == "+79789998877").first()
+        if ghost:
+            db.delete(ghost)
+            db.commit()
+        db.close()
+        ghost_res = client.get("/api/orders", headers=user_header)
+        assert ghost_res.status_code == 401, ghost_res.text
+        print("[OK] Deleted user token -> 401 (no ghost session)")
+
         # 7. 429 Rate limiting case
         rate_limited = False
         for i in range(25):

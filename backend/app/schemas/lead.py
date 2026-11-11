@@ -18,3 +18,7 @@ class LeadOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class LeadDoneUpdate(BaseModel):
+    done: bool

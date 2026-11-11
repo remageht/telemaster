@@ -18,6 +18,17 @@ class ProductCreate(ProductBase):
     pass
 
 
+class ProductUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=128)
+    sku: Optional[str] = Field(None, min_length=1, max_length=64)
+    price: Optional[int] = Field(None, gt=0)
+    old_price: Optional[int] = Field(None, ge=0)
+    stock: Optional[int] = Field(None, ge=0)
+    desc: Optional[str] = Field(None, max_length=1000)
+    img: Optional[str] = Field(None, max_length=512)
+    cat_id: Optional[str] = Field(None, min_length=1, max_length=64)
+
+
 class ProductOut(ProductBase):
     class Config:
         from_attributes = True

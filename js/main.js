@@ -42,7 +42,7 @@
   } catch { /* ignore */ }
   // показ минимум ~3с (пайка идёт 3с), прячем по load;
   // клик — пропуск, абсолютный таймер — страховка
-  const bootMin = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 300 : 3200;
+  const bootMin = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 200 : 400;
   let bootLoaded = false, bootMinDone = false;
   const tryHideBoot = () => { if (bootLoaded && bootMinDone) hideBoot(); };
   window.addEventListener("load", () => { bootLoaded = true; tryHideBoot(); });
@@ -286,16 +286,29 @@
   /* ---------- Корзина ---------- */
   const cartCount = document.getElementById("cartCount");
   const cartBtn = document.getElementById("cartBtn");
-  const USE_API = true;
-  const API_BASE = (window.__CONFIG__ && window.__CONFIG__.API_BASE) || window.API_BASE || "http://localhost:8000";
-  // Этап 1: админ-чтение пытается взять данные с API, при 401/ошибке — fallback localStorage (JWT появится в Этапе 2)
+  const __CFG = window.__CONFIG__ || {};
+  const USE_API = __CFG.USE_API !== false;
+  const API_BASE = typeof __CFG.API_BASE === "string" ? __CFG.API_BASE : "";
+  // Этап 1: админ-чтение/запись через API, при 401/ошибке — fallback localStorage
+  const jwt = () => { try { return sessionStorage.getItem("tm-jwt") || ""; } catch { return ""; } };
+  const apiFetch = async (path, method = "GET", body) => {
+    const token = jwt();
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, status: res.status, data };
+    return { ok: true, status: res.status, data };
+  };
   const apiGet = async (path) => {
     try {
-      const token = (() => { try { return JSON.parse(sessionStorage.getItem("tm-admin"))?.token || sessionStorage.getItem("tm-jwt") || ""; } catch { return sessionStorage.getItem("tm-jwt") || ""; } })();
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch(`${API_BASE}${path}`, { headers });
-      if (!res.ok) throw new Error("api");
-      return await res.json();
+      const r = await apiFetch(path);
+      return r.ok ? r.data : null;
     } catch { return null; }
   };
   const RL_WINDOW = 15 * 60 * 1000, RL_MAX = 5;
@@ -550,9 +563,7 @@
     } else {
       saveLocal();
     }
-    const lastLead = leads[0];
-    const clean = (s) => String(s == null ? "" : s).replace(/[<>&]/g, "");
-    sendTelegramInsecureDemo(`Новая заявка\nИмя: ${clean(lastLead.name)}\nКонтакт: ${clean(lastLead.contact)}\nКанал: ${clean(lastLead.channel)}`);
+    // уведомление в Telegram отправляет сервер (POST /api/leads → notify_admin)
 
     success.hidden = false;
     form.reset();
@@ -1930,12 +1941,9 @@ const productCard = (p) => {
         requestAnimationFrame(step);
       }
     } else if (view === "admin") {
-      pageMain.innerHTML = isAdmin() ? viewAdmin() : viewAdminLogin();
-      if (isAdmin() && USE_API) {
-        // Этап 1: фоновая попытка взять данные с API (401 → fallback localStorage, пока нет JWT)
-        apiGet("/api/leads").then((d) => { if (d) console.info("[api] leads from server", d.length); });
-        apiGet("/api/orders").then((d) => { if (d) console.info("[api] orders from server", d.length); });
-      }
+      const admin = isAdmin();
+      pageMain.innerHTML = admin ? viewAdmin() : viewAdminLogin();
+      if (admin && USE_API) loadAdminData();
     } else {
       pageMain.innerHTML = viewNotFound();
     }
@@ -2010,13 +2018,13 @@ const productCard = (p) => {
         // Этап 5: обновляем кэш товаров (сток списали на сервере)
         try { await loadApiProducts(); } catch { /* ignore */ }
       } catch {
-        order = doLocal();
+        showToast("Ошибка связи с сервером при оформлении заказа. Пожалуйста, повторите попытку.");
+        return;
       }
     } else {
       order = doLocal();
     }
-    const clean = (s) => String(s == null ? "" : s).replace(/[<>&]/g, "");
-    sendTelegramInsecureDemo(`Новый заказ № ${order.no} на ${money(order.total)}\n${clean(order.name)}, ${clean(order.phone)}\n${DELIVERY_NAMES[order.delivery] || ""}${order.address ? " · " + clean(order.address) : ""}${promoCode ? `\nПромокод ${promoCode}: −${money(discount)}` : ""}\n${(order.lines || []).map((l) => `${clean(l.name)} × ${l.qty}`).join("\n")}`);
+    // уведомление в Telegram отправляет сервер (POST /api/orders → notify_admin)
     cartStore.clear();
     activePromo = null;
     try { localStorage.removeItem("tm-promo-active"); } catch { /* ignore */ }
@@ -2175,18 +2183,43 @@ const productCard = (p) => {
       location.hash = "#/";
       renderRoute();
     } else if (target.hasAttribute("data-lead-done")) {
-      const id = Number(target.dataset.leadDone);
-      saveLeads(getLeadsRaw().map((l) => (l.id === id ? { ...l, done: !l.done } : l)));
-      renderRoute();
+      const id = target.dataset.leadDone;
+      const lead = getLeadsRaw().find((l) => String(l.id) === id);
+      if (lead) {
+        const next = !lead.done;
+        if (lead.sid != null && USE_API) {
+          apiFetch(`/api/leads/${lead.sid}`, "PATCH", { done: next })
+            .then((r) => {
+              if (!r.ok) throw new Error("api");
+              saveLeads(getLeadsRaw().map((l) => (String(l.id) === id ? { ...l, done: next } : l)));
+            })
+            .catch(() => saveLeads(getLeadsRaw().map((l) => (String(l.id) === id ? { ...l, done: next } : l))))
+            .finally(() => renderRoute());
+        } else {
+          saveLeads(getLeadsRaw().map((l) => (String(l.id) === id ? { ...l, done: next } : l)));
+          renderRoute();
+        }
+      }
     } else if (target.hasAttribute("data-tg-test")) {
-      const { tgToken, tgChat } = getSettings();
-      if (!tgToken || !tgChat) { showToast("Сначала сохраните токен и ID чата"); return; }
-      sendTelegramInsecureDemo("Проверка связи: ТЕЛЕМАСТЕР на связи ✅");
-      showToast("Тест отправлен — проверьте чат");
+      if (!sessionStorage.getItem("tm-jwt")) { showToast("Сначала войдите как админ"); return; }
+      sendTelegram("Проверка связи: ТЕЛЕМАСТЕР на связи ✅").then((r) => {
+        if (r.status === "sent") showToast("Тест отправлен — проверьте чат");
+        else if (r.status === "not_configured") showToast("Telegram не настроен: TELEGRAM_BOT_TOKEN/CHAT_ID в .env");
+        else showToast(`Ошибка: ${r.detail || r.status}`);
+      });
     } else if (target.hasAttribute("data-lead-del")) {
-      const id = Number(target.dataset.leadDel);
-      saveLeads(getLeadsRaw().filter((l) => l.id !== id));
-      renderRoute();
+      const id = target.dataset.leadDel;
+      const lead = getLeadsRaw().find((l) => String(l.id) === id);
+      const removeLocal = () => saveLeads(getLeadsRaw().filter((l) => String(l.id) !== id));
+      if (lead && lead.sid != null && USE_API) {
+        apiFetch(`/api/leads/${lead.sid}`, "DELETE")
+          .then(() => removeLocal())
+          .catch(removeLocal)
+          .finally(() => renderRoute());
+      } else {
+        removeLocal();
+        renderRoute();
+      }
     } else if (target.hasAttribute("data-promo-toggle")) {
       const code = target.dataset.promoToggle;
       savePromos(getPromos().map((p) => (p.code === code ? { ...p, active: !p.active } : p)));
@@ -2324,10 +2357,23 @@ const productCard = (p) => {
       renderRoute();
     } else if (target.hasAttribute("data-del-order")) {
       const orders = getOrders();
-      orders.splice(parseInt(target.dataset.delOrder, 10), 1);
-      localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
-      showToast("Заказ удалён");
-      renderRoute();
+      const idx = parseInt(target.dataset.delOrder, 10);
+      const order = orders[idx];
+      const removeLocal = () => {
+        const list = getOrders();
+        list.splice(idx, 1);
+        localStorage.setItem(ORDERS_KEY, JSON.stringify(list));
+      };
+      if (order && order.sid != null && USE_API) {
+        apiFetch(`/api/orders/${order.sid}`, "DELETE")
+          .then(() => removeLocal())
+          .catch(removeLocal)
+          .finally(() => { showToast("Заказ удалён"); renderRoute(); });
+      } else {
+        removeLocal();
+        showToast("Заказ удалён");
+        renderRoute();
+      }
     } else if (target.hasAttribute("data-del-cat")) {
       const id = target.dataset.delCat;
       if (getProducts().some((p) => p.cat.id === id)) {
@@ -2389,6 +2435,49 @@ const productCard = (p) => {
   };
   const saveLeads = (list) => localStorage.setItem("tm-leads", JSON.stringify(list.slice(0, 100)));
 
+  // --- синхронизация админки с сервером (PATCH/DELETE статусов и заявок) ---
+  const mergeLeadsFromServer = (server) => {
+    const local = getLeadsRaw();
+    const before = JSON.stringify(local);
+    const bySid = new Map(local.filter((l) => l.sid != null).map((l) => [l.sid, l]));
+    server.forEach((s) => {
+      const existing = bySid.get(s.id) || local.find((l) => l.sid == null && l.name === s.name && l.contact === s.contact);
+      const merged = { ...(existing || {}), ...s, id: existing ? existing.id : `s${s.id}`, sid: s.id };
+      if (existing) Object.assign(existing, merged);
+      else local.push(merged);
+    });
+    saveLeads(local);
+    return JSON.stringify(getLeadsRaw()) !== before;
+  };
+  const mergeOrdersFromServer = (server) => {
+    const local = getOrdersRaw();
+    const before = JSON.stringify(local);
+    server.forEach((s) => {
+      const existing = local.find((o) => o.sid === s.id || String(o.no) === String(s.no));
+      const merged = {
+        ...(existing || {}),
+        no: s.no, items: s.items, total: s.total, subtotal: s.subtotal, fee: s.fee,
+        name: s.name, phone: s.phone, delivery: s.delivery, pay: s.pay,
+        address: s.address, comment: s.comment, status: s.status,
+        lines: s.lines || [], sid: s.id, date: s.created_at,
+      };
+      if (existing) Object.assign(existing, merged);
+      else local.push(merged);
+    });
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(local.slice(0, 100)));
+    return JSON.stringify(getOrdersRaw()) !== before;
+  };
+  let adminSyncAt = 0;
+  const loadAdminData = async () => {
+    if (Date.now() - adminSyncAt < 8000) return;
+    adminSyncAt = Date.now();
+    const [orders, leads] = await Promise.all([apiGet("/api/orders"), apiGet("/api/leads")]);
+    let changed = false;
+    if (Array.isArray(orders)) changed = mergeOrdersFromServer(orders) || changed;
+    if (Array.isArray(leads)) changed = mergeLeadsFromServer(leads) || changed;
+    if (changed && isAdmin() && location.hash.startsWith("#/admin")) renderRoute();
+  };
+
   const SETTINGS_KEY = "tm-settings";
   // WARNING: INSECURE DEMO — токен Telegram хранится в localStorage в открытую.
   // Любой XSS или доступ к DevTools раскрывает tgToken. В продакшене: хранить токен
@@ -2403,21 +2492,25 @@ const productCard = (p) => {
     } catch { return { tgToken: "", tgChat: "" }; }
   };
   /**
-   * Этап 3: токен только в .env на сервере. Клиент шлёт POST /api/telegram/send {text}.
-   * Network: POST http://localhost:8000/api/telegram/send — токен не светится.
-   * Fallback: если USE_API=false или сервер не настроен — молча игнор (демо).
+   * Этап 6: токен только в .env, уведомления о заказах/заявках шлёт сервер.
+   * Клиент дергает эндпоинт только для админского «теста связи» (нужен JWT).
    */
-  const sendTelegramInsecureDemo = (text) => {
-    if (!USE_API) return;
+  const sendTelegram = async (text) => {
+    if (!USE_API) return { status: "disabled" };
+    const tok = sessionStorage.getItem("tm-jwt") || "";
     try {
-      fetch(`${API_BASE}/api/telegram/send`, {
+      const r = await fetch(`${API_BASE}/api/telegram/send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
         body: JSON.stringify({ text }),
-      }).catch(() => {});
-    } catch { /* ignore */ }
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) return { status: "error", detail: j.detail || `HTTP ${r.status}` };
+      return j;
+    } catch {
+      return { status: "error", detail: "Сервер недоступен" };
+    }
   };
-  const sendTelegram = sendTelegramInsecureDemo;
 
   const viewAdminLogin = () => `
     <section class="page container">
@@ -2427,10 +2520,13 @@ const productCard = (p) => {
         </span>
         <h3>Админпанель</h3>
         <p>Доступ только для сотрудников магазина</p>
-        <div class="admin-demo-banner" role="note" style="background:var(--beige);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.4;color:var(--muted);margin-bottom:14px">⚠️ Демо-защита. Пароль хранится на клиенте — в продакшене нужна серверная авторизация (JWT + POST /api/admin/login).</div>
+        <label>
+          <span>Логин</span>
+          <input type="text" name="login" placeholder="admin" autocomplete="username">
+        </label>
         <label>
           <span>Пароль</span>
-          <input type="password" name="password" placeholder="••••••••" required>
+          <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
         </label>
         <button class="btn btn--primary btn--full" type="submit">Войти</button>
         <p class="admin-err" id="adminErr" hidden>Неверный пароль</p>
@@ -2759,17 +2855,18 @@ const productCard = (p) => {
     if (e.target.id === "adminSettingsForm") {
       e.preventDefault();
       // Этап 6: токен больше не храним в браузере, только в backend/.env
-      showToast("С Этапа 3 токен — только в backend/.env (TELEGRAM_BOT_TOKEN). Поля ниже не используются.");
+      showToast("Telegram настраивается в backend/.env: TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID. Поля ниже не используются.");
       return;
     }
     if (e.target.id === "adminLoginForm") {
       e.preventDefault();
       const input = e.target.elements.password;
+      const login = String(e.target.elements.login.value || "admin").trim() || "admin";
       const raw = String(input.value || "");
       // Этап 6: только API, hash-fallback удалён
       if (!USE_API) { input.value = ""; const err = document.getElementById("adminErr"); if (err) { err.textContent = "Требуется API (USE_API=true)"; err.hidden = false; } return; }
       try {
-        const r = await fetch(`${API_BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: "admin", password: raw }) });
+        const r = await fetch(`${API_BASE}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: login, password: raw }) });
         if (r.ok) { const j = await r.json(); sessionStorage.setItem("tm-jwt", j.access_token); renderRoute(); return; }
         const j = await r.json().catch(() => ({}));
         input.value = ""; const err = document.getElementById("adminErr"); if (err) { err.textContent = j.detail || "Неверный пароль"; err.hidden = false; }
@@ -2810,9 +2907,17 @@ const productCard = (p) => {
     if (!sel) return;
     const orders = getOrders();
     const order = orders[parseInt(sel.dataset.orderStatus, 10)];
-    if (order) {
+    if (!order) return;
+    const applyLocal = () => {
       order.status = sel.value;
       localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
+    };
+    if (order.sid != null && USE_API) {
+      apiFetch(`/api/orders/${order.sid}`, "PATCH", { status: sel.value })
+        .then((r) => { if (!r.ok) throw new Error("api"); applyLocal(); })
+        .catch(applyLocal);
+    } else {
+      applyLocal();
     }
   });
 

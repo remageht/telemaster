@@ -30,8 +30,12 @@ backend/*/ __pycache__/
 *.db
 backend/telemaster.db
 data/
-check_lr3.py
-gen_lr3.py
+!backend/app/data/
+!backend/app/data/catalog.json
+*_lr*.py
+dump*.py
+verify_*.py
+build_*.py
 
 # local prompts - not for GitHub
 PROMPT.md

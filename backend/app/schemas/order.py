@@ -21,7 +21,12 @@ class OrderCreate(BaseModel):
     fee: Optional[int] = Field(0, ge=0)
     total: Optional[int] = Field(0, ge=0)
     discount: Optional[int] = Field(0, ge=0)
+    promo: Optional[str] = Field(None, max_length=32)
     lines: Optional[List[OrderLine]] = Field(None)
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str = Field(..., min_length=2, max_length=32)
 
 
 class OrderOut(BaseModel):

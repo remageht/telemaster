@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     TELEGRAM_CHAT_ID: str = ""
     CORS_ORIGINS: str = "http://localhost:8080,http://127.0.0.1:8080,http://localhost:8000,http://localhost"
     RATE_LIMIT_DEFAULT: str = "20/minute"
+    ADMIN_PHONE: str = "admin"
+    ADMIN_PASSWORD: str = "telemaster2026"
 
     class Config:
         env_file = ".env"

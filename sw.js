@@ -1,6 +1,6 @@
 /* ТЕЛЕМАСТЕР — service worker: сайт ставится как приложение и живёт офлайн.
    ВАЖНО: при смене ?v= у ассетов обновить список ASSETS и CACHE ниже. */
-const CACHE = "tm-v92";
+const CACHE = "tm-v93";
 const ASSETS = [
   "./",
   "./index.html",
@@ -40,6 +40,8 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || !req.url.startsWith(self.location.origin)) return;
+  // динамические API-ответы не кэшируем: иначе сток/заказы «залипают»
+  if (new URL(req.url).pathname.startsWith("/api/")) return;
 
   // навигация/HTML — всегда сеть (иначе обновления не доходят никогда),
   // офлайн-фолбэк на закэшированную оболочку
@@ -52,6 +54,20 @@ self.addEventListener("fetch", (e) => {
           return res;
         })
         .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  // конфиг должен обновляться без бампа CACHE — network-first
+  if (new URL(req.url).pathname.endsWith("/js/config.js")) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req))
     );
     return;
   }

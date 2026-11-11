@@ -77,9 +77,12 @@ def get_current_user(
     from app.models.user import User
     user = db.query(User).filter(User.phone == sub).first()
     if not user:
-        # Fallback to payload data if user was seeded or session token
-        is_admin = bool(payload.get("is_admin", False))
-        return {"sub": sub, "phone": sub, "name": sub, "is_admin": is_admin, "payload": payload}
+        # токен выдан ранее, но пользователь удалён/заблокирован — доступ запрещён
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User no longer exists",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return {
         "sub": user.phone,
@@ -91,7 +94,7 @@ def get_current_user(
 
 
 def require_admin(user=Depends(get_current_user)):
-    if not user.get("is_admin") and not user.get("payload", {}).get("is_admin"):
+    if not user.get("is_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",

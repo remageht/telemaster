@@ -1023,6 +1023,7 @@ body.is-live .showcase { animation: livePulse 0.9s ease; }
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.01em;
+  text-wrap: balance;
   margin-bottom: 22px;
 }
 .hero__text {
@@ -1044,6 +1045,7 @@ body.is-live .showcase { animation: livePulse 0.9s ease; }
   font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   color: var(--red);
   white-space: nowrap;
 }
@@ -1177,6 +1179,10 @@ body.is-live .showcase { animation: livePulse 0.9s ease; }
   gap: 44px;
   width: max-content;
   animation: marquee 30s linear infinite;
+}
+.marquee:hover .marquee__track,
+.marquee:focus-within .marquee__track {
+  animation-play-state: paused;
 }
 .marquee__track span {
   font-weight: 800;
@@ -1786,9 +1792,8 @@ body.is-live .showcase { animation: livePulse 0.9s ease; }
 .footer__brand p { color: #a99e89; font-size: 13.5px; margin-top: 16px; max-width: 300px; }
 .footer__col { display: grid; gap: 10px; align-content: start; }
 .footer__col b { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; margin-bottom: 6px; }
-.footer__col a, .footer__col span { color: #a99e89; font-size: 14px; font-weight: 600; }
-.footer__col a { position: relative; transition: color 0.2s ease, padding-left 0.2s ease; }
-.footer__col a:hover { color: #ffb829; padding-left: 14px; }
+.footer__col a { position: relative; display: inline-block; transition: color 0.2s ease, transform 0.2s ease; }
+.footer__col a:hover { color: #ffb829; transform: translateX(6px); }
 .footer__col a::before {
   content: "";
   position: absolute;
@@ -2561,7 +2566,7 @@ body.modal-open { overflow: hidden; }
 .track__no { font-size: 14px; color: var(--muted); }
 
 /* прогресс скидки */
-.cab-sale-num { display: block; font-size: 32px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 10px; }
+.cab-sale-num { display: block; font-size: 32px; font-weight: 900; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-bottom: 10px; }
 .sale-bar { height: 10px; border-radius: 99px; background: var(--beige); border: 1px solid var(--border); overflow: hidden; margin-bottom: 10px; }
 .sale-bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--warm), var(--red)); transition: width 0.8s ease; }
 .cab-card--sale i { font-style: normal; font-size: 13px; color: var(--muted); }
@@ -3233,7 +3238,7 @@ body.modal-open { overflow: hidden; }
   gap: 14px;
   margin: 22px 0 26px;
 }
-.p-price { font-size: 30px; font-weight: 900; letter-spacing: -0.02em; margin-right: auto; }
+.p-price { font-size: 30px; font-weight: 900; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-right: auto; }
 .p-price s { font-size: 17px; margin-left: 8px; }
 .p-specs { display: grid; gap: 10px; }
 .p-specs li {

@@ -26,13 +26,37 @@ def get_db():
 def init_db():
     from app.models import user, product, order, lead  # noqa: F401
     from app.models.user import User
+    from app.models.product import Product
     from app.core.security import get_password_hash
     Base.metadata.create_all(bind=engine)
-    # сид админа для Этапа 2: phone=admin, password=telemaster2026
+    # сид админа: логин/пароль из env (ADMIN_PHONE / ADMIN_PASSWORD)
+    if settings.ENVIRONMENT == "production" and settings.ADMIN_PASSWORD == "telemaster2026":
+        import logging
+        logging.getLogger("uvicorn.error").warning(
+            "SECURITY: default ADMIN_PASSWORD is used in production. Set ADMIN_PASSWORD in .env"
+        )
     try:
         db = SessionLocal()
-        if not db.query(User).filter(User.phone == "admin").first():
-            db.add(User(phone="admin", name="Admin", password_hash=get_password_hash("telemaster2026"), is_admin=True))
+        if not db.query(User).filter(User.phone == settings.ADMIN_PHONE).first():
+            db.add(
+                User(
+                    phone=settings.ADMIN_PHONE,
+                    name="Admin",
+                    password_hash=get_password_hash(settings.ADMIN_PASSWORD),
+                    is_admin=True,
+                )
+            )
+            db.commit()
+        # сид каталога: базовые товары из js/data.js (только недостающие — правки админа не перетираем)
+        import json
+        from pathlib import Path
+        catalog_path = Path(__file__).resolve().parent.parent / "data" / "catalog.json"
+        if catalog_path.exists():
+            items = json.loads(catalog_path.read_text(encoding="utf-8"))
+            existing = {row[0] for row in db.query(Product.id).all()}
+            for item in items:
+                if item["id"] not in existing:
+                    db.add(Product(**item))
             db.commit()
         db.close()
     except Exception:
