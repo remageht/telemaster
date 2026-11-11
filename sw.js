@@ -1,12 +1,12 @@
 /* ТЕЛЕМАСТЕР — service worker: сайт ставится как приложение и живёт офлайн.
    ВАЖНО: при смене ?v= у ассетов обновить список ASSETS и CACHE ниже. */
-const CACHE = "tm-v93";
+const CACHE = "tm-v94";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./css/style.css?v=63",
-  "./js/main.js?v=72",
+  "./js/main.js?v=73",
   "./js/constellation.js?v=39",
   "./js/pcb-field.js?v=1",
   "./js/data.js?v=2",

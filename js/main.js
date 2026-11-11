@@ -141,7 +141,7 @@
     if (badge) {
       const cur = assetVersions(document);
       const parts = Object.keys(cur).sort().map((n) => `${n.replace(/\.(js|css)$/, "")} v${cur[n]}`);
-      badge.textContent = parts.length ? "сборка " + parts.join(" · ") : "";
+      badge.textContent = parts.length ? "v1.2.0 (" + parts.join(" · ") + ")" : "v1.2.0";
     }
   } catch { /* ignore */ }
 
