@@ -1267,18 +1267,20 @@
 
 const productCard = (p) => {
     const price = p.oldPrice
-      ? `${money(p.price)} ${money(p.oldPrice)} `
+      ? `${money(p.price)} <s>${money(p.oldPrice)}</s>`
       : money(p.price);
+    const pkg = p.pkg || (p.sku && p.sku.includes("F103") ? "LQFP-48" : p.sku && p.sku.includes("WROOM") ? "SMD-38" : p.sku && p.sku.includes("328P") ? "DIP-28" : p.sku && p.sku.includes("MF50") ? "Axial" : "");
     return `
       <article class="product">
         <a class="product__img" href="#/product/${escAttr(p.id)}" aria-label="${esc(p.name)}">
           ${stockBadge(p)}
+          ${pkg ? `<span class="product__pkg">${esc(pkg)}</span>` : ""}
           ${p.oldPrice ? `<span class="product__badge">−${Math.round((1 - p.price / p.oldPrice) * 100)}%</span>` : ""}
           ${HIT_IDS.includes(p.id) ? `<span class="product__hit">ХИТ</span>` : ""}
           ${productImg(p)}
         </a>
         <button class="fav-btn${favStore.has(p.id) ? " is-active" : ""}" type="button" data-fav="${escAttr(p.id)}" aria-label="В избранное" title="В избранное">${HEART_SVG}</button>
-        <span class="product__sku">Арт. ${esc(p.sku)}</span>
+        <span class="product__sku">Арт. <code>${esc(p.sku)}</code></span>
         <h3><a href="#/product/${escAttr(p.id)}">${esc(p.name)}</a></h3>
         <div class="product__meta">
           <span class="product__price">${price}</span>
