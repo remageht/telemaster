@@ -652,8 +652,8 @@
 
     function update(dt) {
     const shaped = o.shape === "chip" || o.shape === "bulb" || o.shape === "crimea";
-    const K = o.spring || 26;
-    const DAMP = o.damp || 3.2;
+    const K = o.spring || 34;
+    const DAMP = o.damp || 6.2;
     const three = shaped && o.three;
     const baseSpin = o.spinRate != null ? o.spinRate : (MODEL_SPIN[o.model] != null ? MODEL_SPIN[o.model] : 0.28);
     const tvSignal = o.model === "tv" && performance.now() < (o.tvUntil || 0);
@@ -697,10 +697,8 @@
         const damp = Math.exp(-DAMP * dt);
         p.svx *= damp;
         p.svy *= damp;
-        // жёсткий потолок скорости: без него резкий спин выбрасывает
-        // частицы за край, wrap-around телепортирует их на другую сторону
-        // и линии-связи растягиваются через весь экран — «хаос»
-        const VM = 520;
+        // плавный потолок скорости: защищает от резкого смещения за пределы якорей
+        const VM = 160;
         if (p.svx > VM) p.svx = VM; else if (p.svx < -VM) p.svx = -VM;
         if (p.svy > VM) p.svy = VM; else if (p.svy < -VM) p.svy = -VM;
         p.x += p.svx * dt;
@@ -722,13 +720,14 @@
       if (o.interactive) {
         const dx = p.x - mx, dy = p.y - my;
         const d = Math.hypot(dx, dy);
-        if (d < 120 && d > 0.1) {
+        const radius = o.repelRadius || 75;
+        if (d < radius && d > 0.1) {
           if (p.ax != null) {
-            const f = (1 - d / 120) * 2600;
+            const f = (1 - d / radius) * 360;
             p.svx += (dx / d) * f * dt;
             p.svy += (dy / d) * f * dt;
           } else {
-            const f = (1 - d / 120) * 34;
+            const f = (1 - d / radius) * 24;
             p.x += (dx / d) * f * dt;
             p.y += (dy / d) * f * dt;
           }
@@ -818,11 +817,11 @@
       for (const p of parts) {
         const dx = p.x - px, dy = p.y - py;
         const d = Math.hypot(dx, dy) || 1;
-        const f = Math.max(0, 1 - d / 260) * 520;
+        const f = Math.max(0, 1 - d / 160) * 110;
         p.svx += (dx / d) * f;
         p.svy += (dy / d) * f;
       }
-      if (o.three) spinV = Math.min(spinV + 0.9, 2.2); // клик мягко подкручивает, потолок 2.2 рад/с
+      if (o.three) spinV = Math.min(spinV + 0.35, 0.9); // мягкий спин, потолок 0.9 рад/с
       if (o.model === "tv") o.tvUntil = performance.now() + 6000; // стукнул — 6 секунд сигнала
     });
   }
@@ -910,6 +909,9 @@
       model: "chip",
       shockwave: true,
       interactive: true,
+      spring: 36,
+      damp: 6.5,
+      repelRadius: 75,
     });
     if (field) {
       chipField = field;
@@ -943,7 +945,9 @@
     const field = createField(crimeaCanvas, {
       palette: DALA,
       shape: "crimea",
-      spring: 32,
+      spring: 36,
+      damp: 6.2,
+      repelRadius: 60,
       interactive: true,
     });
     if (field) watchVisibility(crimeaCanvas.parentElement, field);
@@ -988,79 +992,15 @@
         model: cv.dataset.model3d,
         shockwave: cv.dataset.model3d === "tv",
         interactive: true,
+        spring: 36,
+        damp: 6.5,
+        repelRadius: 75,
       });
       if (cv.dataset.model3d === "resistor") wireResistorLab(cv, field);
       if (field) watchVisibility(cv.parentElement, field);
     });
   };
   window.__modelsRefresh();
-
-  // 2. модалка входа: фиолет + янтарь, живёт пока открыта
-  const authCanvas = document.getElementById("authCanvas");
-  const authModal = document.getElementById("authModal");
-  if (authCanvas && authModal) {
-    const field = createField(authCanvas, {
-      palette: DALA,
-      divisor: 16000,
-      max: 70,
-      interactive: false,
-      size: "window",
-    });
-    if (field) {
-      const sync = () => field.setAwake(!authModal.hidden);
-      new MutationObserver(sync).observe(authModal, { attributes: true, attributeFilter: ["hidden"] });
-      sync();
-    }
-  }
-
-  // динамические канвасы (админка перерисовывается): data-stars="preset"
-  const DYN_PRESETS = {
-    admin: { palette: DALA, divisor: 18000, max: 60, interactive: false },
-  };
-  const mountedStars = new WeakSet();
-  window.__starsRefresh = () => {
-    document.querySelectorAll("canvas[data-stars]").forEach((cv) => {
-      if (mountedStars.has(cv)) return;
-      if (!DYN_PRESETS[cv.dataset.stars]) return;
-      mountedStars.add(cv);
-      const field = createField(cv, DYN_PRESETS[cv.dataset.stars]);
-      if (field) {
-        if ("IntersectionObserver" in window) {
-          new IntersectionObserver(
-            (es) => es.forEach((en) => field.setAwake(en.isIntersecting)),
-            { threshold: 0.05 }
-          ).observe(cv.parentElement);
-        } else field.setAwake(true);
-      }
-    });
-  };
-  window.__starsRefresh();
-
-  // контакты: тёплое созвездие за формой
-  const ctaCanvas = document.getElementById("ctaCanvas");
-  if (ctaCanvas) {
-    const field = createField(ctaCanvas, {
-      palette: DALA,
-      divisor: 16000,
-      max: 70,
-      alpha: 0.55,
-      interactive: false,
-    });
-    if (field) watchVisibility(ctaCanvas.parentElement, field);
-  }
-
-  // 3. подвал: тёплая пыль
-  const footCanvas = document.getElementById("footCanvas");
-  if (footCanvas) {
-    const field = createField(footCanvas, {
-      palette: DALA,
-      divisor: 14000,
-      max: 80,
-      alpha: 0.6,
-      interactive: false,
-    });
-    if (field) watchVisibility(footCanvas.parentElement, field);
-  }
 
   // шрифты приехали позже замера — геометрия могла уплыть: пересобрать всех
   if (document.fonts && document.fonts.ready) {
