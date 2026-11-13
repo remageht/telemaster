@@ -26,13 +26,13 @@
   // палитра подстраивается под тему сайта (светлая/Dala)
   function applyCircuitTheme() {
     const dala = document.documentElement.dataset.theme === "dala";
-    PALETTE.trace = dala ? "rgba(139, 132, 255, 0.20)" : "rgba(139, 108, 78, 0.14)";
-    PALETTE.body = dala ? "rgba(150, 140, 255, 0.35)" : "rgba(93, 76, 60, 0.28)";
-    PALETTE.bodyFill = dala ? "rgba(10, 10, 10, 0.70)" : "rgba(255, 255, 255, 0.65)";
-    PALETTE.label = dala ? "rgba(199, 211, 234, 0.50)" : "rgba(93, 76, 60, 0.40)";
-    PALETTE.pad = dala ? "rgba(255, 184, 41, 0.40)" : "rgba(176, 137, 104, 0.35)";
+    PALETTE.trace = dala ? "rgba(200, 168, 132, 0.18)" : "rgba(139, 108, 78, 0.14)";
+    PALETTE.body = dala ? "rgba(214, 186, 150, 0.30)" : "rgba(93, 76, 60, 0.28)";
+    PALETTE.bodyFill = dala ? "rgba(11, 9, 8, 0.70)" : "rgba(255, 255, 255, 0.65)";
+    PALETTE.label = dala ? "rgba(214, 206, 196, 0.50)" : "rgba(93, 76, 60, 0.40)";
+    PALETTE.pad = dala ? "rgba(255, 194, 71, 0.38)" : "rgba(176, 137, 104, 0.35)";
     PALETTE.pulses = dala
-      ? ["#8052ff", "#a385ff", "#ffb829"]
+      ? ["#ff3d57", "#ff6b81", "#ffc247"]
       : ["#c8102e", "#e05a2b", "#b08968"];
     // живые сигналы тоже перекрашиваем, иначе старые цвета висят на чёрном
     pulses.forEach((p) => { p.color = pick(PALETTE.pulses); });
