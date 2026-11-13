@@ -1,7 +1,8 @@
 /* ============================================================
-   ТЕЛЕМАСТЕР — созвездия Dala
-   Один движок, три сцены: void-полоса (полный спектр),
-   модалка входа (фиолет + янтарь) и подвал (тёплая пыль).
+   ТЕЛЕМАСТЕР — созвездия
+   Один движок, несколько сцен: hero-лампа, чипы и 3D-модели,
+   карта Крыма, void-полоса и подвал. Акцент один — фирменный
+   красный с янтарём.
    Треугольники дрейфуют, мерцают, сторонятся курсора.
    Каждая сцена живёт только пока видна.
    ============================================================ */
@@ -15,17 +16,19 @@
   // раскалённые сигнатуры 3D-моделей вместо пастели Dala:
   // чип — бело-красный, резистор — золотой, паяльник — оранжевый
   const MODEL_COLORS = {
-    chip: ["#ffffff", "#ff4d4d", "#ffb829", "#ff6a00"],
+    chip: ["#ffffff", "#ff3d57", "#ffb829", "#e05a2b"],
     resistor: ["#ffb829", "#ffd166", "#ffffff", "#e05a2b"],
     iron: ["#ff6a00", "#ffb703", "#ffffff", "#ff3b3b"],
-    led: ["#b3f0ff", "#ffffff", "#40c4ff", "#0288d1"],
-    cap: ["#e0e0e0", "#90caf9", "#ffffff", "#64b5f6"],
+    led: ["#dfe7ee", "#ffffff", "#9fb4c8", "#6f8598"],
+    cap: ["#e6e2da", "#c3ccd4", "#ffffff", "#9aa6b0"],
     meter: ["#ffd54f", "#ffb300", "#ffffff", "#ff8f00"],
     toroid: ["#ffab91", "#ff8f00", "#ffd180", "#ffffff"],
     tv: ["#666666", "#999999", "#cccccc", "#888888"],
   };
-  // единый шаблон Dala: полный спектр во всех сценах
-  const DALA = ["#8052ff", "#ffb829", "#ffffff", "#e879f9", "#40c4ff", "#15846e"];
+  // брендовый акцент: один красный + янтарь/глина во всех сценах
+  const DALA = ["#ff3d57", "#ffc247", "#f6f1e8", "#ff8b96", "#c9a179", "#a89e8e"];
+  // у карты свой набор: кремовый #f6f1e8 на светлой бумаге исчезает и рвёт берег
+  const COAST = ["#e31f3f", "#ff5c72", "#ffc247", "#c9a179"];
   // реестр полей: после подгрузки шрифтов геометрия едет — пересобрать всех
   const liveFields = [];
   // цветовой код резисторов: цифра 0-9
@@ -65,7 +68,7 @@
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const n = o.shape === "bulb" ? (o.bulbScale > 1.5 ? 650 : 430) : o.three ? 260 : o.shape === "chip" ? 150 : o.shape === "crimea" ? 150 : Math.max(o.min, Math.min(o.max, Math.round((W * H) / o.divisor)));
+    const n = o.shape === "bulb" ? (o.bulbScale > 1.5 ? 650 : 430) : o.three ? 260 : o.shape === "chip" ? 150 : o.shape === "crimea" ? Math.round(Math.max(190, Math.min(320, Math.sqrt(W * H) * 1.4))) : Math.max(o.min, Math.min(o.max, Math.round((W * H) / o.divisor)));
     parts = Array.from({ length: n }, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
@@ -174,7 +177,7 @@
       all[i] = all[j];
       all[j] = t;
     }
-    const FIL_COLORS = ["#fff8e6", "#ffd166", "#ffb829"];
+    const FIL_COLORS = ["#fff8e6", "#ffd97a", "#ffc247"];
     const bcx = o.bx != null ? (o.bx <= 1 ? o.bx * W : o.bx) : W / 2;
     const bcy = o.by != null ? (o.by <= 1 ? o.by * H : o.by) : H / 2;
     parts.forEach((p, i) => {
@@ -575,19 +578,12 @@
       const a = CR[i], b = CR[(i + 1) % CR.length];
       sampleEdge(pts, cx + a[0] * R, cy + a[1] * R * YS, 0, cx + b[0] * R, cy + b[1] * R * YS, 0, R * 0.04);
     }
-    for (let i = pts.length - 1; i > 0; i--) {
-      const j = (Math.random() * (i + 1)) | 0;
-      const t = pts[i];
-      pts[i] = pts[j];
-      pts[j] = t;
-    }
+    // Равномерная выборка сохраняет весь контур при любом числе частиц.
+    const step = pts.length / parts.length;
     parts.forEach((p, i) => {
-      if (i < pts.length && Math.random() < 0.96) {
-        p.ax = pts[i][0];
-        p.ay = pts[i][1];
-      } else {
-        p.ax = null;
-      }
+      const q = pts[Math.min(pts.length - 1, Math.floor(i * step))];
+      p.ax = q[0] + rand(-0.7, 0.7);
+      p.ay = q[1] + rand(-0.7, 0.7);
       p.svx = 0;
       p.svy = 0;
       p.x = Math.random() * W;
@@ -608,7 +604,7 @@
           if (dx * dx + dy * dy > 14400) continue; // защита: не соединять частицы дальше 120px на экране
           const glow = o.lit !== false;
           ctx.globalAlpha = (isFil ? 0.5 : isBase ? 0.34 : 0.26) * o.alpha * (glow ? 1 : 0.55);
-          ctx.strokeStyle = isFil ? "#ffd166" : isBase ? "#9fb4c8" : "#7fd3ff";
+          ctx.strokeStyle = isFil ? "#ffd97a" : isBase ? "#9fb4c8" : "#c9d2e0";
           ctx.beginPath();
           ctx.moveTo(A.x, A.y);
           ctx.lineTo(B.x, B.y);
@@ -620,7 +616,8 @@
       // лампа: почти без мерцания (эпилептологам — 0 вспышек)
       ctx.lineWidth = o.three ? 1.8 : 1.2;
       const isBulb = o.shape === "bulb";
-      const floor = isBulb ? 0.88 : (o.three ? 0.45 : 0.25), ceil = isBulb ? 0.12 : (o.three ? 0.55 : 0.55);
+      const isCrimea = o.shape === "crimea";
+      const floor = isBulb ? 0.88 : (isCrimea ? 0.6 : (o.three ? 0.45 : 0.25)), ceil = isBulb ? 0.12 : (isCrimea ? 0.3 : 0.55);
       for (const p of parts) {
         const flick = isBulb && reduced ? 0 : (floor + ceil * (0.5 + 0.5 * Math.sin((t / 1000) * p.ts + p.tw)));
         const a = o.alpha * flick * (p.dal == null ? 1 : p.dal) * ((o.shape === "bulb" && p.fil && !o.lit) ? 0.12 : 1);
@@ -635,6 +632,12 @@
           ctx.lineTo(p.s * 0.87, p.s * 0.5);
           ctx.lineTo(-p.s * 0.87, p.s * 0.5);
           ctx.closePath();
+          ctx.fill();
+        } else if (o.shape === "crimea") {
+          // карту читают как береговую линию, а не как россыпь фигур
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(0, 0, Math.max(1, p.s * 0.42), 0, 6.2832);
           ctx.fill();
         } else {
           ctx.strokeStyle = p.color;
@@ -929,7 +932,7 @@
       toggleLit: true,
       interactive: false,
       bulbScale: 1,
-      bx: 0.12,
+      bx: 0.9,
       by: 0.8,
       drift: 0,
       damp: 4.8,
@@ -943,7 +946,7 @@
   const crimeaCanvas = document.getElementById("crimeaCanvas");
   if (crimeaCanvas) {
     const field = createField(crimeaCanvas, {
-      palette: DALA,
+      palette: COAST,
       shape: "crimea",
       spring: 36,
       damp: 6.2,

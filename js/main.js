@@ -156,9 +156,9 @@
   const faviconFor = (bg, stroke) => `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='${bg}'/%3E${chipPaths.replaceAll("%STROKE%", stroke)}%3C/svg%3E`;
   const FAVICONS = {
     light: faviconFor("%23c8102e", "%23fff"),
-    dala: faviconFor("%23000", "%238052ff"),
+    dala: faviconFor("%230b0908", "%23ff5c72"),
   };
-  const THEME_COLORS = { light: "#c8102e", dala: "#000000" };
+  const THEME_COLORS = { light: "#c8102e", dala: "#0b0908" };
   const applyThemeIcon = () => {
     const t = document.documentElement.dataset.theme;
     const link = document.querySelector('link[rel="icon"]');
@@ -166,21 +166,31 @@
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta && THEME_COLORS[t]) meta.content = THEME_COLORS[t];
   };
+  const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+  let followsSystemTheme = true;
   const initTheme = () => {
     let t = null;
     try { t = localStorage.getItem("tm-theme"); } catch { t = null; }
-    if (t === "dark") t = "dala"; // средняя тёмная слита с Dala
-    if (!THEMES.includes(t)) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dala" : "light";
+    if (t === "dark") t = "dala";
+    followsSystemTheme = !THEMES.includes(t);
+    if (followsSystemTheme) t = systemTheme.matches ? "dala" : "light";
     document.documentElement.dataset.theme = t;
     applyThemeLabel();
     applyThemeIcon();
   };
   initTheme();
+  systemTheme.addEventListener("change", () => {
+    if (!followsSystemTheme) return;
+    document.documentElement.dataset.theme = systemTheme.matches ? "dala" : "light";
+    applyThemeLabel();
+    applyThemeIcon();
+  });
   if (themeBtn) {
     themeBtn.addEventListener("click", () => {
       const cur = THEMES.indexOf(document.documentElement.dataset.theme);
       const next = THEMES[(cur + 1) % THEMES.length];
       document.documentElement.dataset.theme = next;
+      followsSystemTheme = false;
       try { localStorage.setItem("tm-theme", next); } catch { /* ignore */ }
       applyThemeLabel();
       applyThemeIcon();
